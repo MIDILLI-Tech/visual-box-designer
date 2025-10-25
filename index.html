@@ -1,0 +1,3361 @@
+<!--
+
+Copyright 2024 - MIDILLI Tech
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIDILLI Visual Box Designer - For Laser Engravers, CNC, and 3D Printers</title>
+
+<!-- SEO Meta Tags -->
+<meta name="description" content="Free online 3D box designer and CNC component planning tool. Design custom cabinets, furniture panels with drill holes and components. Export JSON for CNC machines.">
+<meta name="keywords" content="box designer, cabinet design, CNC planning, furniture design, drill planning, 3D box, panel design, woodworking, CNC machine, JSON export">
+<meta name="author" content="MIDILLI Tech">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph / Social Media -->
+<meta property="og:title" content="MIDILLI Visual Box Designer - Free 3D Box Designer">
+<meta property="og:description" content="Design custom boxes and cabinets with precise component placement for Laser engraving, CNC manufacturing, and 3D printing. Export your designs as JSON and use on free MIDILLI tools.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://midilli.tech/wp-content/uploads/2024/10/cropped-MidilliLogoUnisexNoBg.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "MIDILLI Visual Box Designer",
+  "applicationCategory": "DesignApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Free 3D box and cabinet designer with component planning. For laser engraving, CNC manufacturing, and 3D printing. Export your designs as JSON and use on free MIDILLI tools."
+}
+</script>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    background: #222;
+    overflow: hidden;
+  }
+  #leftPanel, #rightPanel {
+    width: 250px;
+    background: #f4f4f4;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  #canvasArea {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+    min-width: 0;
+  }
+
+  #svgContainer {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 3px solid #999;
+    position: relative;
+    overflow: auto;
+    cursor: default;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    box-sizing: border-box;
+  }
+
+  #svgCanvas {
+    border: 1px solid #ccc;
+    background: #fafafa;
+    flex-shrink: 0;
+  }
+
+  #resizeHandle {
+    width: 100%;
+    height: 8px;
+    background: #666;
+    cursor: row-resize;
+    z-index: 10;
+    flex-shrink: 0;
+    display: block;
+  }
+  #resizeHandle:hover {
+    background: #333;
+  }
+
+
+  #threeContainer {
+    width: 100%;
+    height: 300px;
+    border: 1px solid #999;
+    margin-top: 10px;
+    display: block;
+  }
+
+  .toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px;
+    background: #e8e8e8;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+  }
+  
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #4CAF50;
+    transition: .4s;
+    border-radius: 24px;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  
+  input:not(:checked) + .slider {
+    background-color: #ccc;
+  }
+  
+  input:checked + .slider:before {
+    transform: translateX(26px);
+  }
+
+  button, input, select {
+    width: 100%;
+    margin: 3px 0;
+    padding: 5px;
+    box-sizing: border-box;
+  }
+  
+  #jsonModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #jsonModal.show {
+    display: flex;
+  }
+
+  #jsonContent {
+    background: #fff;
+    padding: 20px;
+    padding-top: 50px;
+    border-radius: 8px;
+    max-width: 90%;
+    max-height: 85%;
+    overflow: auto;
+    position: relative;
+    min-width: 600px;
+  }
+
+  #jsonContent pre {
+    background: #f4f4f4;
+    padding: 15px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0;
+  }
+  
+  #closeJsonBtn {
+    position: absolute;
+    top: 10px;
+    right: 1px;
+    background: #ff5555;
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    z-index: 10;
+  }
+  #closeJsonBtn:hover {
+    background: #ff3333;
+  }
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal.show {
+    display: flex;
+  }
+  .modal-content {
+    background: #fff;
+    padding: 20px;
+    padding-top: 50px;
+    border-radius: 8px;
+    max-width: 90%;
+    max-height: 85%;
+    overflow: auto;
+    position: relative;
+    min-width: 600px;
+  }
+  .modal-content pre {
+    background: #f4f4f4;
+    padding: 15px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .modal-close {
+    position: absolute;
+    top: 10px;
+    right: 1px;
+    background: #ff5555;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    z-index: 10;
+  }
+  .modal-close:hover {
+    background: #ff3333;
+  }
+  
+  /* Help Modal Specific */
+  #helpContent {
+    max-width: 800px;
+  }
+  #helpContent h2 {
+    color: #333;
+    border-bottom: 2px solid #4CAF50;
+    padding-bottom: 10px;
+  }
+  #helpContent h3 {
+    color: #555;
+    margin-top: 20px;
+  }
+  #helpContent ul {
+    line-height: 1.8;
+  }
+  #helpContent kbd {
+    background: #f4f4f4;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+  
+  .help-section {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border-left: 4px solid #4CAF50;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div id="leftPanel">
+  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding: 10px; background: #e8e8e8; border-radius: 4px;">
+    <a href="https://midilli.tech" target="_blank" style="flex-shrink: 0;">
+      <img src="https://midilli.tech/wp-content/uploads/2024/10/cropped-MidilliLogoUnisexNoBg.png" 
+           alt="MIDILLI Logo" 
+           style="width: 50px; display: block; cursor: pointer;">
+    </a>
+    <div style="flex: 1;">
+      <h3 style="margin: 0; font-size: 16px; line-height: 1.2; text-align: center;">MIDILLI<br>Visual Box Designer</h3>
+    </div>
+  </div>
+  <div style="display: flex; gap: 5px; margin: 3px 0;">
+    <button id="loadJSONBtn" style="flex: 1; margin: 0;" title="Open a previously saved JSON. Shortcut: Ctrl + O">📂 Load</button>
+    <button id="exportJSONBtn" style="flex: 1; margin: 0;" title="Export current project as JSON. Shortcut: Ctrl + S">💾 Export</button>
+  </div>
+  <div style="display: flex; gap: 5px; margin: 3px 0;">
+    <button id="undoBtn" style="flex: 1; margin: 0;" title="Undo last action. Shortcut: Ctrl + Z">↶ Undo</button>
+    <button id="redoBtn" style="flex: 1; margin: 0;" title="Redo last undone action. Shortcut: Ctrl + Shift + Z or Ctrl + Y">↷ Redo</button>
+  </div>
+  <label>Project Name:</label>
+  <input id="projectName" placeholder="MyProject">
+  <div style="display: flex; gap: 5px; margin: 3px 0;">
+    <div style="flex: 1;">
+      <label for="projectWidth" style="margin: 0;">Width (cm):</label>
+      <input id="projectWidth" type="number" min="0" value="10" required style="margin: 0;">
+    </div>
+    <div style="flex: 1;">
+      <label for="projectLength" style="margin: 0;">Length (cm):</label>
+      <input id="projectLength" type="number" min="0" value="10" required style="margin: 0;">
+    </div>
+  </div>
+  <div style="display: flex; gap: 5px; margin: 3px 0;">
+    <div style="flex: 1;">
+        <label for="projectHeight">Height (mm):</label>
+        <input id="projectHeight" type="number" min="0" value="30" required>
+    </div>
+    <div style="flex: 1;">
+        <label for="materialThick">Material (mm):</label>
+        <input id="materialThick" type="number" min="0" value="3" required>
+    </div>
+  </div>
+  <div style="margin: 10px 0; padding: 10px; background: #e8e8e8; border-radius: 4px;">
+    <label style="font-weight: bold; display: block; margin-bottom: 5px;">
+      <input type="checkbox" id="outerSizing" style="width: auto; vertical-align: middle;">
+      Outer Sizing
+    </label>
+    <small style="color: #666; display: block; margin-top: 5px;">
+      When checked: dimensions include material thickness<br>
+      When unchecked: dimensions are inner cavity size. <a href="https://midilli.tech/help-and-support/manuals/manuals-free-tools/understanding-2d-coordinate-systems-in-midilli-tools/" target="_blank">More.</a>
+    </small>
+  </div>
+
+  <div style="margin: 10px 0; padding: 10px; background: #e8e8e8; border-radius: 4px;">
+    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Enabled Sides:</label>
+    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
+        <input type="checkbox" id="sideCheckFront" checked style="width: auto; margin: 0;"> Front
+    </label>
+    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
+        <input type="checkbox" id="sideCheckBack" checked style="width: auto; margin: 0;"> Back
+    </label>
+    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
+        <input type="checkbox" id="sideCheckTop" checked style="width: auto; margin: 0;"> Top
+    </label>
+    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
+        <input type="checkbox" id="sideCheckBottom" checked style="width: auto; margin: 0;"> Bottom
+    </label>
+    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
+        <input type="checkbox" id="sideCheckLeft" checked style="width: auto; margin: 0;"> Left
+    </label>
+    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
+        <input type="checkbox" id="sideCheckRight" checked style="width: auto; margin: 0;"> Right
+    </label>
+    <button id="updatePartBtn">🔄 Update Sides</button>
+  </div>
+
+  <label style="font-weight: bold; margin-top: 10px;">Current Side:</label>
+  <select id="sideSelector">
+    <option value="Front">Front</option>
+    <option value="Back">Back</option>
+    <option value="Top" selected>Top</option>
+    <option value="Bottom">Bottom</option>
+    <option value="Left">Left</option>
+    <option value="Right">Right</option>
+  </select>
+
+  <div style="display: flex; gap: 5px; margin: 3px 0;">
+    <button id="addRectBtn" title="Add Rectangle Component (Shortcut: Shift + R)" style="flex: 1; margin: 0;">+ ⬜</button>
+    <button id="addRoundedBtn" title="Add Rounded Component (Shortcut: Shift + C)" style="flex: 1; margin: 0;">+ ⚪</button>
+  </div>
+  <button id="showJSONBtn">📄 Show JSON</button>
+  <button id="helpBtn" style="background: #4CAF50; color: white; font-weight: bold;">❓ Help</button>
+
+</div>
+
+<div id="canvasArea">
+  <div id="svgContainer">
+    <svg id="svgCanvas" width="700" height="400"></svg>
+  </div>
+  <div id="resizeHandle"></div>
+  <div id="threeContainer"></div>
+<!-- <div id="debugInfo" style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.7); color:#0f0; padding:10px; font-family:monospace; font-size:12px; border-radius:5px;">
+<div>Camera Pos: <span id="camPos">-</span></div>
+<div>Camera LookAt: <span id="camTarget">-</span></div>
+<div>Distance: <span id="camDist">-</span></div>
+</div> -->
+</div>
+
+<div id="rightPanel">
+  <h3>Selected Component</h3>
+  
+  <!-- Nothing selected -->
+  <div id="noSelection" style="padding: 20px; text-align: center; color: #666;">
+    <p style="font-style: italic;">Please add or select an existing component</p>
+  </div>
+
+  <!-- Component selected -->
+  <div id="componentFields" style="display: none;">
+    <label for="compName">Text</label>
+    <input id="compName">
+    <label for="compFontSize">Font Size</label>
+    <input id="compFontSize" type="number" min="1" step="0.5" value="12">
+    <label for="compX">X (cm)</label>
+    <input id="compX" type="number" min="0" step="0.1">
+    <label for="compY">Y (cm)</label>
+    <input id="compY" type="number" min="0" step="0.1">
+
+    <div id="drillCircle">
+      <label for="compDD">Drill Diameter (cm)</label>
+      <input id="compDD" type="number" min="0.01" step="0.1">
+    </div>
+    
+    <div id="drillRect">
+      <label for="compDW">Drill Width (cm)</label>
+      <input id="compDW" type="number" min="0.01" step="0.1">
+      <label for="compDL">Drill Length (cm)</label>
+      <input id="compDL" type="number" min="0.01" step="0.1">
+    </div>
+
+    <label for="compVD">Visible Diameter (cm) <small>(0 = use W/L)</small></label>
+    <input id="compVD" type="number" min="0" step="0.1">
+
+    <label for="compVW">Visible Width (cm)</label>
+    <input id="compVW" type="number" min="0" step="0.1">
+
+    <label for="compVL">Visible Length (cm)</label>
+    <input id="compVL" type="number" min="0" step="0.1">
+
+    <label for="compRot">Rotation</label>
+    <input id="compRot" type="number" min="0" value="0" title="Rotation in degrees (Shortcut: R)">
+    <button id="applyChangesBtn" title="Shortcut: Enter">Apply</button>
+    <button id="deleteCompBtn" title="Shortcut: Delete">Delete</button>
+  </div>
+  <h3>Command to Execute</h3>
+  <div style="margin: 10px 0; padding: 10px; background: #e8e8e8; border-radius: 4px;">
+    <small style="color: #666; display: block; margin-bottom: 5px;">Copy and paste this command to use with MIDILLI tools:</small>
+    <textarea id="commandOutput" readonly style="width: 100%; min-height: 80px; font-family: monospace; font-size: 11px; background: #f9f9f9; border: 1px solid #ccc; padding: 5px; resize: vertical; box-sizing: border-box"></textarea>
+  <button id="copyCommandBtn" style="margin-top: 5px; width: 100%;">📋 Copy Command</button>
+</div>
+  <h3>Settings</h3>
+  <div class="toggle-container" style="border-radius: 4px;">
+    <label style="font-weight: bold; color: #333;">Show 2D Designer:</label>
+    <label class="switch">
+    <input type="checkbox" id="toggle2D" checked>
+    <span class="slider"></span>
+    </label>
+  </div>
+  <div class="toggle-container" style="border-radius: 4px;">
+    <label style="font-weight: bold; color: #333;">Show 3D Preview:</label>
+    <label class="switch">
+    <input type="checkbox" id="toggle3D" checked>
+    <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="toggle-container" style="border-radius: 4px;">
+    <label style="font-weight: bold; color: #333;">Use Inches:</label>
+    <label class="switch">
+        <input type="checkbox" id="toggleInches">
+        <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="toggle-container" style="border-radius: 4px;">
+    <label style="font-weight: bold; color: #333;">Show Grids:</label>
+    <label class="switch">
+        <input type="checkbox" id="toggleShowGrid" checked>
+        <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="toggle-container" style="border-radius: 4px;">
+    <label style="font-weight: bold; color: #333;">Snap to Grid:</label>
+    <label class="switch">
+      <input type="checkbox" id="toggleSnapGrid" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div style="margin: 10px 0; padding: 10px; background: #e8e8e8; border-radius: 4px;">
+    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Grid Size:</label>
+    <label for="gridSizeX" style="display: flex; justify-content: space-between; align-items: center; margin: 3px 0;">
+      <span>Grid X (cm):</span>
+      <input type="number" id="gridSizeX" min="0.1" step="0.1" value="0.5" style="width: 70px; margin: 0;">
+    </label>
+    <label for="gridSizeY" style="display: flex; justify-content: space-between; align-items: center; margin: 3px 0;">
+      <span>Grid Y (cm):</span>
+      <input type="number" id="gridSizeY" min="0.1" step="0.1" value="0.5" style="width: 70px; margin: 0;">
+    </label>
+  </div>
+  <div class="toggle-container" style="border-radius: 4px;">
+    <label style="font-weight: bold; color: #333;">Dark Theme:</label>
+    <label class="switch">
+      <input type="checkbox" id="toggleDarkTheme" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+</div>
+
+<div id="jsonModal">
+  <div id="jsonContent">
+    <button id="closeJsonBtn">✖ Close</button>
+    <h2>Generated JSON</h2>
+    <pre id="jsonDisplay"></pre>
+  </div>
+</div>
+
+<div id="helpModal" class="modal">
+  <div class="modal-content" id="helpContent">
+    <button class="modal-close" id="closeHelpBtn">✖ Close</button>
+    <h2>📖 MIDILLI Visual Box Designer - User Guide</h2>
+
+    <div class="help-section">
+      <h3>🎯 Getting Started</h3>
+        <p><strong>MIDILLI Visual Box Designer</strong> is a free online tool for designing custom boxes, cabinets, and furniture panels with precise component placement. Design your project visually and export as JSON for use with our production-ready tools.</p>
+        
+        <p><strong>💡 What Can You Do With The Exported JSON?</strong></p>
+        <p>The JSON file generated by this designer serves as input for three powerful free MIDILLI tools, each optimized for different manufacturing methods:</p>
+        
+        <ul style="list-style: none; padding-left: 0;">
+            <li style="margin: 10px 0; padding: 10px; background: rgba(76, 175, 80, 0.1); border-left: 4px solid #4CAF50; border-radius: 4px;">
+            <strong>🔥 <a href="https://midilli.tech/product/midilli-svg-generator-for-laser-engraving-machines/" target="_blank">MIDILLI SVG Generator for Laser Engraving Machines</a></strong><br>
+            Create SVG files for box-shaped parts, ready to use with laser engravers and cutters. Perfect for clean, precise cuts on wood, acrylic, and more.
+            </li>
+            <li style="margin: 10px 0; padding: 10px; background: rgba(76, 175, 80, 0.1); border-left: 4px solid #4CAF50; border-radius: 4px;">
+            <strong>⚙️ <a href="https://midilli.tech/product/midilli-g-code-generator-for-cnc-routers/" target="_blank">MIDILLI G-Code Generator for CNC Routers</a></strong><br>
+            Generate custom G-Code files for CNC routers to engrave, recess, and cut with precision. Full control over tool paths, depths, and speeds.
+            </li>
+            <li style="margin: 10px 0; padding: 10px; background: rgba(76, 175, 80, 0.1); border-left: 4px solid #4CAF50; border-radius: 4px;">
+            <strong>🖨️ <a href="https://midilli.tech/product/midilli-stl-generator-for-3d-printers/" target="_blank">MIDILLI STL Generator for 3D Printers</a></strong><br>
+            Design and export STL files for 3D printing with flexible settings for box-shaped parts. Create prototypes or final products layer by layer.
+            </li>
+        </ul>
+        
+        <p>All three tools are <strong>free to download</strong> and available on <a href="https://midilli.tech/download/free-tools-and-utilities/" target="_blank">our website</a>.</p>
+        
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+        <p><strong>🛠️ Workflow:</strong></p>
+        <ol>
+            <li>Set your project dimensions and material thickness</li>
+            <li>Select which sides to include (uncheck to leave sides open)</li>
+            <li>Choose a side from <kbd>Current Side</kbd> dropdown</li>
+            <li>Add <kbd>Rectangle</kbd> or <kbd>Rounded</kbd> components (drill holes, cutouts, etc.)</li>
+            <li>Click components to select, drag or use arrow keys to move, edit properties on the right panel</li>
+            <li>Preview your design in 3D (optional but recommended)</li>
+            <li>Click <kbd>Export JSON</kbd> when ready</li>
+            <li>Use the JSON file with MIDILLI tools: <code>--json-file YourProject.json</code>, including the command under <kbd>Command to Execute</kbd> on the right.</li>
+        </ol>
+    </div>
+    
+    <div class="help-section">
+      <h3>📏 Project Setup</h3>
+      <ul>
+        <li><strong>Project Name:</strong> Name your project (used for export filename)</li>
+        <li><strong>Width/Length/Height:</strong> Box dimensions in centimeters</li>
+        <li><strong>Material Thickness:</strong> Panel material thickness in millimeters</li>
+        <li><strong>Outer Sizing:</strong>
+          <ul>
+            <li>✅ Checked: Dimensions include material thickness (outer measurements)</li>
+            <li>❌ Unchecked: Dimensions are inner cavity size</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    
+    <div class="help-section">
+      <h3>🔲 Panel Sides</h3>
+      <p>Enable/disable which sides of the box to design:</p>
+      <ul>
+        <li>Front, Back, Top, Bottom, Left, Right</li>
+        <li>Uncheck unused sides to exclude from design</li>
+        <li>Click <kbd>Update Sides</kbd> after changing sides. Note: If a side is unchecked, this will also remove the components on that side.</li>
+      </ul>
+    </div>
+    
+    <div class="help-section">
+      <h3>➕ Adding Components</h3>
+      <ol>
+        <li>Select a side from <strong>Current Side</strong> dropdown</li>
+        <li>Click <kbd>+ ⬜</kbd> or <kbd>Shift + R</kbd> to add rectangle or <kbd>+ ⚪</kbd> or <kbd>Shift + C</kbd> to add rounded component</li>
+        <li>Component appears at center of 2D canvas</li>
+        <li>Drag or use arrow keys to reposition (snaps to 0.5cm grid by default). Grid snapping can be disabled in settings. Grid size can be adjusted in the same settings menu.</li>
+      </ol>
+    </div>
+    
+    <div class="help-section">
+      <h3>✏️ Editing Components</h3>
+      <p><strong>Click any component</strong> to select and edit:</p>
+      <ul>
+        <li><strong>Text:</strong> Text to show above components (rotates with rotation)</li>
+        <li><strong>Font Size:</strong> Size of the text (in points)</li>
+        <li><strong>X/Y Position:</strong> Location in centimeters</li>
+        <li><strong>Drill Diameter:</strong> Circular hole size (for rounded components)</li>
+        <li><strong>Drill Width/Length:</strong> Rectangular hole dimensions</li>
+        <li><strong>Visible Diameter/Width/Length:</strong> Visual outline size (dashed line). Text position is also affected by this setting. In MIDILLI tools, these elements are also used to create recesses (if enabled).</li>
+        <li><strong>Rotation:</strong> Angle in degrees (clockwise). Alternatively, use <kbd>R</kbd> key on keyboard.</li>
+      </ul>
+      <p>Click <kbd>Apply</kbd> or press <kbd>Enter</kbd> to save changes or <kbd>Delete</kbd> or press <kbd>Delete</kbd> to remove the selected component.</p>
+    </div>
+    
+    <div class="help-section">
+      <h3>🎨 2D Canvas View</h3>
+      <ul>
+        <li><strong>Grid:</strong> 0.5cm squares (bold lines every 5th line. Grid sizes can be changed in the settings on the right)</li>
+        <li><strong>Dashed outline:</strong> Visible component boundary</li>
+        <li><strong>Colored shape:</strong> Actual drill/cut area</li>
+        <li><strong>Drag & Drop:</strong> Click and drag components to reposition</li>
+        <li>Navigating 2D Canvas: Use <kbd>middle</kbd> or <kbd>right</kbd> mouse button to pan the view. <kbd>Scroll</kbd> to zoom in/out. <kbd>Double-click</kbd> to reset zoom and pan.</li>
+      </ul>
+    </div>
+    
+    <div class="help-section">
+      <h3>🔮 3D Preview</h3>
+      <ul>
+        <li><strong>Mouse:</strong> <kbd>Left-click</kbd> drag to rotate view</li>
+        <li><kbd>Right-click</kbd> (or <kbd>Shift + Left-click</kbd>): Pan camera</li>
+        <li><kbd>Scroll</kbd>: Zoom in/out</li>
+        <li><strong>Helper cube (top-right):</strong> Shows orientation, clicking on a side will face the camera towards that side</li>
+        <li><strong>Toggle:</strong> Show/hide 3D view with switch at bottom-right</li>
+        <li><strong>Resize:</strong> Drag horizontal bar between 2D and 3D views</li>
+      </ul>
+    </div>
+    <div class="help-section">
+        <h3>⌨️ Keyboard Shortcuts</h3>
+        <ul>
+            <li><kbd>Ctrl + Z</kbd> - Undo last action</li>
+            <li><kbd>Ctrl + Shift + Z</kbd> or <kbd>Ctrl + Y</kbd> - Redo last undone action</li>
+            <li><kbd>Shift + R</kbd> - Add rectangle component</li>
+            <li><kbd>Shift + C</kbd> - Add circle/rounded component</li>
+            <li><kbd>R</kbd> - Rotate selected component by 45° (when component is selected)</li>
+            <li><kbd>↑ ↓ ← →</kbd> - Move selected component (when component is selected)</li>
+            <li><kbd>Delete</kbd> - Delete selected component (when component is selected)</li>
+            <li><kbd>Enter</kbd> - Update Sides (when editing component properties)</li>
+        </ul>
+        </div>
+
+        <div class="help-section">
+        <h3>🎨 Theme & Display Options</h3>
+        <ul>
+            <li><strong>Dark Theme:</strong> Toggle between dark and light interface themes</li>
+            <li><strong>Show 2D Designer:</strong> Toggle 2D canvas view on/off</li>
+            <li><strong>Show 3D Preview:</strong> Toggle 3D preview on/off</li>
+            <li><strong>Show Grids:</strong> Display grid lines on 2D canvas for easier alignment</li>
+            <li><strong>Snap to Grid:</strong> Components automatically snap to grid intersections when moved</li>
+            <li><strong>Use Inches:</strong> Switch between centimeters and inches for all measurements. Note that this is only for displaying purposes. All MIDILLI tools use centimeters internally.</li>
+            <li><strong>Grid Size:</strong> Customize grid spacing (default: 0.5cm x 0.5cm)</li>
+        </ul>
+        </div>
+        <div class="help-section">
+        <h3>💾 Load & Export & Save</h3>
+        <ul>
+            <li><kbd>Load JSON</kbd> - Import previously saved projects. Shortcut: Ctrl + O</li>
+            <li><kbd>Show JSON</kbd> - Preview generated data structure to review</li>
+            <li><kbd>Export JSON</kbd> - Download <code>.json</code> file for MIDILLI tools to generate your SVG file for laser engravers, G Code for CNC machines, or STL file for 3D printing. Shortcut: Ctrl + S</li>
+            <li>Important: Do not forget to use the command under <kbd>Command to Execute</kbd> in the tools.</li>
+        </ul>
+        </div>
+        
+        <div class="help-section">
+        <h3>⚠️ Tips & Notes</h3>
+        <ul>
+            <li>Components snap to 0.5cm grid for precision</li>
+            <li>You can switch between dark and light themes using the toggle in the settings menu.</li>
+            <li>Drill diameter or width and length must be at least 0.01cm</li>
+            <li>Side colors in 3D: <span style="color:#f33">■ Front (Red)</span>, <span style="color:#3f3">■ Back (Green)</span>, <span style="color:#33f">■ Top (Blue)</span>, <span style="color:#ff3">■ Bottom (Yellow)</span>, <span style="color:#f3f">■ Left (Magenta)</span>, <span style="color:#3ff">■ Right (Cyan)</span></li>
+        </ul>
+        </div>
+    
+    <div class="help-section">
+      <h3>🆘 Still Need Help?</h3>
+      <p><a href="https://midilli.tech/help-and-support/" target="_blank">Contact Us</a></p>
+      <p>Version: <span id="appVersion"></span> | <a href="https://midilli.tech" target="_blank">MIDILLI Tech</a></p>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "./libs/three.module.min.js",
+    "orbitcontrols": "./libs/OrbitControls.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "orbitcontrols";
+
+const APP_VERSION = "1.0.0 (25.10.2025)";
+const DEBUG_MODE = false;
+
+const svg = document.getElementById("svgCanvas");
+const svgContainer = document.getElementById("svgContainer");
+const resizeHandle = document.getElementById("resizeHandle");
+const threeContainer = document.getElementById("threeContainer");
+const toggle3D = document.getElementById("toggle3D");
+const toggle2D = document.getElementById("toggle2D");
+const toggleShowGrid = document.getElementById("toggleShowGrid");
+const toggleSnapGrid = document.getElementById("toggleSnapGrid");
+const toggleDarkTheme = document.getElementById("toggleDarkTheme");
+
+const lightTheme = {
+  body: '#fff',
+  panels: '#f4f4f4',
+  panelsText: '#000',
+  canvasArea: '#fff',
+  svgContainer: '#fff',
+  svgBorder: '#999',
+  resizeHandle: '#666',
+  resizeHandleHover: '#333',
+  svgCanvas: '#fafafa',
+  svgBorder2: '#ccc',
+  threeContainer: '#fff',
+  threeContainerBorder: '#999',
+  toggleContainer: '#e8e8e8',
+  toggleContainerBorder: '#ccc',
+  sliderOff: '#ccc',
+  buttonBg: '#fff',
+  buttonText: '#000',
+  buttonBorder: '#ccc',
+  buttonHover: '#f0f0f0',
+  inputBg: '#fff',
+  inputText: '#000',
+  inputBorder: '#ccc',
+  inputFocus: '#4CAF50',
+  labelColor: '#333',
+  smallText: '#666',
+  modalBg: 'rgba(0,0,0,0.7)',
+  modalContent: '#fff',
+  modalText: '#333',
+  modalPre: '#f4f4f4',
+  modalPreText: '#000',
+  modalPreBorder: '#ddd',
+  helpH2: '#333',
+  helpH3: '#555',
+  helpSection: '#e8f5e9',
+  helpKbd: '#f4f4f4',
+  helpKbdBorder: '#ccc',
+  linkColor: '#4CAF50',
+  linkHover: '#66BB6A'
+};
+
+const darkTheme = {
+  body: '#222',
+  panels: '#2a2a2a',
+  panelsText: '#e0e0e0',
+  canvasArea: '#1a1a1a',
+  svgContainer: '#1a1a1a',
+  svgBorder: '#444',
+  resizeHandle: '#444',
+  resizeHandleHover: '#555',
+  svgCanvas: '#2a2a2a',
+  svgBorder2: '#444',
+  threeContainer: '#000',
+  threeContainerBorder: '#444',
+  toggleContainer: '#333',
+  toggleContainerBorder: '#444',
+  sliderOff: '#555',
+  buttonBg: '#3a3a3a',
+  buttonText: '#e0e0e0',
+  buttonBorder: '#555',
+  buttonHover: '#4a4a4a',
+  inputBg: '#333',
+  inputText: '#e0e0e0',
+  inputBorder: '#555',
+  inputFocus: '#4CAF50',
+  labelColor: '#d0d0d0',
+  smallText: '#999',
+  modalBg: 'rgba(0,0,0,0.9)',
+  modalContent: '#2a2a2a',
+  modalText: '#e0e0e0',
+  modalPre: '#1a1a1a',
+  modalPreText: '#4CAF50',
+  modalPreBorder: '#333',
+  helpH2: '#fff',
+  helpH3: '#e0e0e0',
+  helpSection: '#1b5e20',
+  helpKbd: '#1a1a1a',
+  helpKbdBorder: '#555',
+  linkColor: '#4CAF50',
+  linkHover: '#66BB6A'
+};
+
+let parts = {};
+let selectedPart = null;
+let selectedSide = "Top";
+let selectedElement = null;
+const pxPerCm = 70;
+let showGrid = true;
+let gridSnap = true;
+let gridSizeX = 0.5;
+let gridSizeY = 0.5;
+
+const CM_TO_INCH = 0.393701;
+const INCH_TO_CM = 2.54;
+
+let useInches = false;
+
+let internalValues = {
+    width: 10,
+    length: 10,
+    height: 0.3, // mm→cm (3mm = 0.3cm)
+    material: 0.3, // mm → cm (3mm = 0.3cm)
+    gridX: 0.5,
+    gridY: 0.5
+};
+
+const undoStack = [];
+const redoStack = [];
+const MAX_HISTORY = 50; // Maximum undo steps
+
+function saveState() {
+    // Deep clone current parts state
+    const state = JSON.parse(JSON.stringify(parts));
+    undoStack.push(state);
+    
+    // Clear redo stack when new action is performed
+    redoStack.length = 0;
+    
+    // Limit history size
+    if (undoStack.length > MAX_HISTORY) {
+        undoStack.shift();
+    }
+    
+    if (DEBUG_MODE) {
+        console.log(`💾 State saved (${undoStack.length} in history)`);
+    }
+}
+
+function undo() {
+    if (undoStack.length === 0) {
+        console.log("⚠️ Nothing to undo");
+        return;
+    }
+    
+    // Save current state to redo stack
+    const currentState = JSON.parse(JSON.stringify(parts));
+    redoStack.push(currentState);
+    
+    // Restore previous state
+    const previousState = undoStack.pop();
+    parts = JSON.parse(JSON.stringify(previousState));
+    
+    // Update UI
+    updateUIFromParts();
+    drawCanvas();
+    draw3D();
+    
+    if (DEBUG_MODE) {
+        console.log(`↶ Undo (${undoStack.length} remaining)`);
+    }
+}
+
+function redo() {
+    if (redoStack.length === 0) {
+        console.log("⚠️ Nothing to redo");
+        return;
+    }
+    
+    // Save current state to undo stack
+    const currentState = JSON.parse(JSON.stringify(parts));
+    undoStack.push(currentState);
+    
+    // Restore next state
+    const nextState = redoStack.pop();
+    parts = JSON.parse(JSON.stringify(nextState));
+    
+    // Update UI
+    updateUIFromParts();
+    drawCanvas();
+    draw3D();
+    
+    if (DEBUG_MODE) {
+        console.log(`↷ Redo (${redoStack.length} remaining)`);
+    }
+}
+
+function updateUIFromParts() {
+    // Update form fields from parts.Generic
+    if (parts.Generic) {
+        internalValues.width = parts.Generic.width || 10;
+        internalValues.length = parts.Generic.length || 10;
+        internalValues.height = (parts.Generic.height || 30) / 10;
+        internalValues.material = (parts.Generic.material || 3) / 10;
+        
+        if (useInches) {
+            document.getElementById("projectWidth").value = (internalValues.width * CM_TO_INCH).toFixed(2);
+            document.getElementById("projectLength").value = (internalValues.length * CM_TO_INCH).toFixed(2);
+            document.getElementById("projectHeight").value = (internalValues.height * CM_TO_INCH).toFixed(2);
+            document.getElementById("materialThick").value = (internalValues.material * CM_TO_INCH).toFixed(2);
+        } else {
+            document.getElementById("projectWidth").value = internalValues.width.toFixed(2);
+            document.getElementById("projectLength").value = internalValues.length.toFixed(2);
+            document.getElementById("projectHeight").value = (internalValues.height * 10).toFixed(1);
+            document.getElementById("materialThick").value = (internalValues.material * 10).toFixed(1);
+        }
+        
+        document.getElementById("outerSizing").checked = parts.Generic.outer_sizing || false;
+    }
+    
+    // Update active sides checkboxes
+    const loadedSides = new Set();
+    Object.keys(parts).forEach(key => {
+        if (key !== "Generic") {
+            const side = key.split("_")[1];
+            loadedSides.add(side);
+        }
+    });
+    
+    ["Front", "Back", "Top", "Bottom", "Left", "Right"].forEach(side => {
+        const checkbox = document.getElementById(`sideCheck${side}`);
+        checkbox.checked = loadedSides.has(side);
+    });
+    
+    // Update selected part name
+    const partKeys = Object.keys(parts).filter(k => k !== "Generic");
+    if (partKeys.length > 0) {
+        const firstPartKey = partKeys[0];
+        const partName = firstPartKey.split("_")[0];
+        selectedPart = partName;
+        document.getElementById("projectName").value = partName;
+    }
+    
+    updateSideSelector();
+    updateCommandOutput();
+}
+
+function initInternalValues() {
+    internalValues.width = parseFloat(document.getElementById("projectWidth").value) || 10;
+    internalValues.length = parseFloat(document.getElementById("projectLength").value) || 10;
+    internalValues.height = (parseFloat(document.getElementById("projectHeight").value) || 30) / 10; // mm→cm
+    internalValues.material = (parseFloat(document.getElementById("materialThick").value) || 3) / 10; // mm→cm
+    internalValues.gridX = parseFloat(document.getElementById("gridSizeX").value) || 0.5;
+    internalValues.gridY = parseFloat(document.getElementById("gridSizeY").value) || 0.5;
+}
+
+function toDisplayUnit(cm) {
+    if (useInches) {
+        return (cm * CM_TO_INCH).toFixed(2);
+    }
+    return cm.toFixed(2);
+}
+
+function fromDisplayUnit(value) {
+    if (useInches) {
+        return parseFloat(value) * INCH_TO_CM;
+    }
+    return parseFloat(value);
+}
+
+function getUnitLabel() {
+    return useInches ? "in" : "cm";
+}
+
+function applyTheme(theme) {
+  document.body.style.background = theme.body;
+  
+  // Panels
+  document.querySelectorAll('#leftPanel, #rightPanel').forEach(el => {
+    el.style.background = theme.panels;
+    el.style.color = theme.panelsText;
+  });
+  
+  // Headings
+  document.querySelectorAll('#leftPanel h3, #rightPanel h3').forEach(el => {
+    el.style.color = theme.panelsText;
+  });
+
+  document.querySelectorAll('#leftPanel > div[style*="border-radius: 4px"], #rightPanel > div[style*="border-radius: 4px"]').forEach(div => {
+    if(!div.classList.contains('toggle-container')) {
+      div.style.background = theme.toggleContainer;
+      if(div.style.borderBottom) {
+        div.style.borderBottom = `1px solid ${theme.toggleContainerBorder}`;
+      }
+    }
+  });
+
+  // Labels
+  document.querySelectorAll('#leftPanel label, #rightPanel label').forEach(el => {
+    el.style.color = theme.labelColor;
+  });
+  
+  // Small text
+  document.querySelectorAll('#leftPanel small, #rightPanel small').forEach(el => {
+    el.style.color = theme.smallText;
+  });
+  
+  document.querySelectorAll('#leftPanel a, #rightPanel a').forEach(a => {
+    a.style.color = theme.linkColor;
+  });
+
+  // Canvas area
+  document.getElementById('canvasArea').style.background = theme.canvasArea;
+  
+  // SVG Container
+  const svgContainer = document.getElementById('svgContainer');
+  svgContainer.style.background = theme.svgContainer;
+  svgContainer.style.borderBottom = `3px solid ${theme.svgBorder}`;
+  
+  // Resize handle 
+  const resizeHandle = document.getElementById('resizeHandle');
+  resizeHandle.style.background = theme.resizeHandle;
+  
+  // SVG Canvas
+  const svgCanvas = document.getElementById('svgCanvas');
+  svgCanvas.style.background = theme.svgCanvas;
+  svgCanvas.style.border = `1px solid ${theme.svgBorder2}`;
+  
+  // 3D Container
+  const threeContainer = document.getElementById('threeContainer');
+  threeContainer.style.background = theme.threeContainer;
+  threeContainer.style.border = `1px solid ${theme.threeContainerBorder}`;
+  
+  // Toggle containers
+  document.querySelectorAll('.toggle-container').forEach(el => {
+    el.style.background = theme.toggleContainer;
+    el.style.borderBottom = `1px solid ${theme.toggleContainerBorder}`;
+  });
+  
+  // Slider off state
+  document.querySelectorAll('.slider').forEach(slider => {
+    const input = slider.previousElementSibling;
+    if(!input.checked) {
+      slider.style.background = theme.sliderOff;
+    }
+  });
+  
+  // Buttons, inputs, selects
+  document.querySelectorAll('button, input, select').forEach(el => {
+    if(el.type !== 'checkbox') {
+      el.style.background = el.tagName === 'BUTTON' ? theme.buttonBg : theme.inputBg;
+      el.style.color = el.tagName === 'BUTTON' ? theme.buttonText : theme.inputText;
+      el.style.border = `1px solid ${theme.buttonBorder}`;
+    }
+  });
+  
+  // Modals
+  document.querySelectorAll('.modal, #jsonModal').forEach(modal => {
+    modal.style.background = theme.modalBg;
+  });
+  
+  document.querySelectorAll('.modal-content, #jsonContent').forEach(content => {
+    content.style.background = theme.modalContent;
+    content.style.color = theme.modalText;
+    content.style.border = `1px solid ${theme.buttonBorder}`;
+  });
+  
+  document.querySelectorAll('.modal-content pre, #jsonContent pre').forEach(pre => {
+    pre.style.background = theme.modalPre;
+    pre.style.color = theme.modalPreText;
+    pre.style.border = `1px solid ${theme.modalPreBorder}`;
+  });
+  
+  // Help modal specifics - Normal colors
+  document.querySelectorAll('#helpContent h2').forEach(h2 => {
+    h2.style.color = theme.helpH2;
+  });
+  
+  document.querySelectorAll('#helpContent h3').forEach(h3 => {
+    h3.style.color = theme.helpH3;
+  });
+  
+  // Help sections - Normal panel color (not green)
+  document.querySelectorAll('.help-section').forEach(section => {
+    section.style.background = theme.toggleContainer; // Normal panel color
+    section.style.borderLeft = '4px solid #4CAF50'; // Only left border green
+  });
+  
+  document.querySelectorAll('#helpContent kbd').forEach(kbd => {
+    kbd.style.background = theme.helpKbd;
+    kbd.style.border = `1px solid ${theme.helpKbdBorder}`;
+  });
+  
+  document.querySelectorAll('#helpContent a').forEach(a => {
+    a.style.color = theme.linkColor;
+  });
+  
+  // Help button - Only button green
+  const helpBtn = document.getElementById('helpBtn');
+  helpBtn.style.background = '#4CAF50';
+  helpBtn.style.color = 'white';
+  
+  // Update grid lines
+  drawCanvas();
+}
+
+applyTheme(darkTheme);
+
+document.head.insertAdjacentHTML('beforeend', `
+<style>
+  /* Resize handle hover */
+  #resizeHandle:hover {
+    filter: brightness(1.2);
+  }
+  
+  /* Button hover */
+  button:hover:not(#helpBtn):not(.modal-close):not(#closeJsonBtn) {
+    filter: brightness(0.95);
+  }
+  
+  /* Help button hover */
+  #helpBtn:hover {
+    background: #45a049 !important;
+  }
+  
+  /* Input/Select focus */
+  input:focus, select:focus {
+    border-color: #4CAF50 !important;
+    outline: none;
+  }
+  
+  /* Link hover */
+  #helpContent a:hover {
+    filter: brightness(1.2);
+  }
+  
+  /* Modal close button hover */
+  .modal-close:hover, #closeJsonBtn:hover {
+    background: #ff3333 !important;
+  }
+</style>
+`);
+
+toggleDarkTheme.addEventListener('change', (e) => {
+  const theme = e.target.checked ? darkTheme : lightTheme;
+
+  const slider = e.target.nextElementSibling;
+  if (e.target.checked) {
+    slider.style.background = '#4CAF50';
+  } else {
+    const theme = e.target.checked ? darkTheme : lightTheme;
+    slider.style.background = theme.sliderOff;
+  }
+
+  applyTheme(theme);
+  if (DEBUG_MODE) {
+    console.log('Theme changed to:', e.target.checked ? 'Dark' : 'Light');
+  }
+});
+
+toggleShowGrid.addEventListener("change", (e) => {
+    showGrid = e.target.checked;
+    drawCanvas();
+    if (DEBUG_MODE) {
+        console.log("Show Grid:", showGrid ? "ON" : "OFF");
+    }
+});
+
+toggleSnapGrid.addEventListener("change", (e) => {
+    gridSnap = e.target.checked;
+    if (DEBUG_MODE) {
+        console.log("Snap to Grid:", gridSnap ? "ON" : "OFF");
+    }
+});
+
+document.getElementById("gridSizeX").addEventListener("change", (e) => {
+    const value = parseFloat(e.target.value);
+    if(value > 0) {
+        gridSizeX = value;
+        drawCanvas(); // Redraw grid
+        if (DEBUG_MODE) {
+            console.log("Grid Size X changed to:", gridSizeX);
+        }
+    }
+});
+
+document.getElementById("gridSizeY").addEventListener("change", (e) => {
+    const value = parseFloat(e.target.value);
+    if(value > 0) {
+        gridSizeY = value;
+        drawCanvas(); // Redraw grid
+        if (DEBUG_MODE) {
+            console.log("Grid Size Y changed to:", gridSizeY);
+        }
+    }
+});
+
+
+document.getElementById("gridSizeX").addEventListener("input", (e) => {
+    const value = parseFloat(e.target.value) || 0.5;
+    internalValues.gridX = useInches ? value * INCH_TO_CM : value;
+    gridSizeX = internalValues.gridX;
+    drawCanvas();
+});
+
+document.getElementById("gridSizeY").addEventListener("input", (e) => {
+    const value = parseFloat(e.target.value) || 0.5;
+    internalValues.gridY = useInches ? value * INCH_TO_CM : value;
+    gridSizeY = internalValues.gridY;
+    drawCanvas();
+});
+
+
+document.getElementById("toggleInches").addEventListener("change", (e) => {
+    useInches = e.target.checked;
+
+    const slider = e.target.nextElementSibling;
+    if (e.target.checked) {
+        slider.style.background = '#4CAF50';
+    } else {
+        const theme = toggleDarkTheme.checked ? darkTheme : lightTheme;
+        slider.style.background = theme.sliderOff;
+    }
+
+    // Replace interval values to selected unit
+    if (useInches) {
+        document.getElementById("projectWidth").value = (internalValues.width * CM_TO_INCH).toFixed(2);
+        document.getElementById("projectLength").value = (internalValues.length * CM_TO_INCH).toFixed(2);
+        document.getElementById("projectHeight").value = (internalValues.height * CM_TO_INCH).toFixed(2);
+        document.getElementById("materialThick").value = (internalValues.material * CM_TO_INCH).toFixed(2);
+        document.getElementById("gridSizeX").value = (internalValues.gridX * CM_TO_INCH).toFixed(2);
+        document.getElementById("gridSizeY").value = (internalValues.gridY * CM_TO_INCH).toFixed(2);
+    } else {
+        document.getElementById("projectWidth").value = internalValues.width.toFixed(2);
+        document.getElementById("projectLength").value = internalValues.length.toFixed(2);
+        document.getElementById("projectHeight").value = (internalValues.height * 10).toFixed(2); // cm→mm
+        document.getElementById("materialThick").value = (internalValues.material * 10).toFixed(1); // cm→mm
+        document.getElementById("gridSizeX").value = internalValues.gridX.toFixed(2);
+        document.getElementById("gridSizeY").value = internalValues.gridY.toFixed(2);
+    }
+    
+    if (selectedElement) {
+        updateComponentInputs();
+    }
+    
+    updateLabels();
+    drawCanvas();
+    if (DEBUG_MODE) {
+        console.log("Units changed to:", useInches ? "inches" : "cm");
+    }
+});
+
+function updateLabels() {
+    const unit = getUnitLabel();
+    
+    const widthLabel = document.querySelector('label[for="projectWidth"]');
+    const lengthLabel = document.querySelector('label[for="projectLength"]');
+    const heightLabel = document.querySelector('label[for="projectHeight"]');
+    const materialLabel = document.querySelector('label[for="materialThick"]');
+    
+    if (widthLabel) widthLabel.textContent = `Width (${unit}):`;
+    if (lengthLabel) lengthLabel.textContent = `Length (${unit}):`;
+    if (heightLabel) heightLabel.textContent = `Height (${useInches ? 'in' : 'mm'}):`;
+    if (materialLabel) materialLabel.textContent = `Material (${useInches ? 'in' : 'mm'}):`;
+    
+    const gridXLabel = document.querySelector('label[for="gridSizeX"] span');
+    const gridYLabel = document.querySelector('label[for="gridSizeY"] span');
+    
+    if (gridXLabel) gridXLabel.textContent = `Grid X (${unit}):`;
+    if (gridYLabel) gridYLabel.textContent = `Grid Y (${unit}):`;
+    
+    // Right panel labels
+    const labels = {
+        compX: `X (${unit})`,
+        compY: `Y (${unit})`,
+        compDD: `Drill Diameter (${unit})`,
+        compDW: `Drill Width (${unit})`,
+        compDL: `Drill Length (${unit})`,
+        compVD: `Visible Diameter (${unit}) <small>(0 = use W/L)</small>`,
+        compVW: `Visible Width (${unit})`,
+        compVL: `Visible Length (${unit})`,
+        gridsX: `Grid X (${unit})`,
+        gridsY: `Grid Y (${unit})`
+    };
+    
+    Object.entries(labels).forEach(([id, text]) => {
+        const label = document.querySelector(`label[for="${id}"]`);
+        if (label) {
+            label.innerHTML = text;
+        }
+    });
+}
+
+function updateComponentInputs() {
+    if (!selectedElement) return;
+    const c = selectedElement.comp;
+    
+    document.getElementById("compX").value = toDisplayUnit(c.location_x);
+    document.getElementById("compY").value = toDisplayUnit(c.location_y);
+    
+    if (c.drill_diameter !== undefined) {
+        document.getElementById("compDD").value = toDisplayUnit(c.drill_diameter);
+    }
+    if (c.drill_width !== undefined) {
+        document.getElementById("compDW").value = toDisplayUnit(c.drill_width);
+    }
+    if (c.drill_length !== undefined) {
+        document.getElementById("compDL").value = toDisplayUnit(c.drill_length);
+    }
+    if (c.visible_diameter !== undefined) {
+        document.getElementById("compVD").value = toDisplayUnit(c.visible_diameter);
+    }
+    if (c.visible_width !== undefined) {
+        document.getElementById("compVW").value = toDisplayUnit(c.visible_width);
+    }
+    if (c.visible_length !== undefined) {
+        document.getElementById("compVL").value = toDisplayUnit(c.visible_length);
+    }
+}
+
+function initDefaultPart() {
+    const defaultName = document.getElementById("projectName").value || "MyProject";
+    parts = createEmptyPart(defaultName);
+    selectedPart = defaultName;
+    drawCanvas();
+    draw3D();
+}
+
+function getActiveSides() {
+    const sides = [];
+    if(document.getElementById("sideCheckFront").checked) sides.push("Front");
+    if(document.getElementById("sideCheckBack").checked) sides.push("Back");
+    if(document.getElementById("sideCheckTop").checked) sides.push("Top");
+    if(document.getElementById("sideCheckBottom").checked) sides.push("Bottom");
+    if(document.getElementById("sideCheckLeft").checked) sides.push("Left");
+    if(document.getElementById("sideCheckRight").checked) sides.push("Right");
+    return sides;
+}
+
+toggle2D.addEventListener("change", (e) => {
+    const show = e.target.checked;
+    svgContainer.style.display = show ? "flex" : "none";
+    
+    if (!show) {
+        // 2D closed - hide resize handle and 3D should take full height
+        resizeHandle.style.display = "none";
+        if(toggle3D.checked) {
+            threeContainer.style.height = "100%";
+            threeContainer.style.flex = "1";
+            
+            renderer.setSize(threeContainer.clientWidth, document.getElementById("canvasArea").clientHeight);
+            camera.aspect = threeContainer.clientWidth / document.getElementById("canvasArea").clientHeight;
+            camera.updateProjectionMatrix();
+        }
+    } else {
+        // 2D open - if 3D is also visible show resize handle
+        if(toggle3D.checked) {
+            resizeHandle.style.display = "block";
+            svgContainer.style.flex = `0 0 ${svgContainer.offsetHeight}px`;
+            
+            const totalHeight = document.getElementById("canvasArea").offsetHeight;
+            const remaining3DHeight = totalHeight - svgContainer.offsetHeight - resizeHandle.offsetHeight;
+            threeContainer.style.height = `${remaining3DHeight}px`;
+            threeContainer.style.flex = "0";
+            
+            renderer.setSize(threeContainer.clientWidth, remaining3DHeight);
+            camera.aspect = threeContainer.clientWidth / remaining3DHeight;
+            camera.updateProjectionMatrix();
+        } else {
+            // Only 2D open
+            svgContainer.style.flex = "1";
+        }
+    }
+});
+
+toggle3D.addEventListener("change", (e) => {
+    const show = e.target.checked;
+    threeContainer.style.display = show ? "block" : "none";
+    
+    if (show) {
+        // 3D open
+        if(toggle2D.checked) {
+            // Both open - show resize handle
+            resizeHandle.style.display = "block";
+            svgContainer.style.flex = `0 0 ${svgContainer.offsetHeight}px`;
+            
+            const totalHeight = document.getElementById("canvasArea").offsetHeight;
+            const remaining3DHeight = totalHeight - svgContainer.offsetHeight - resizeHandle.offsetHeight;
+            threeContainer.style.height = `${remaining3DHeight}px`;
+            threeContainer.style.flex = "0";
+            
+            renderer.setSize(threeContainer.clientWidth, remaining3DHeight);
+            camera.aspect = threeContainer.clientWidth / remaining3DHeight;
+            camera.updateProjectionMatrix();
+        } else {
+            // Only 3D open - full height
+            resizeHandle.style.display = "none";
+            threeContainer.style.height = "100%";
+            threeContainer.style.flex = "1";
+            
+            renderer.setSize(threeContainer.clientWidth, document.getElementById("canvasArea").clientHeight);
+            camera.aspect = threeContainer.clientWidth / document.getElementById("canvasArea").clientHeight;
+            camera.updateProjectionMatrix();
+        }
+    } else {
+        // 3D closed
+        resizeHandle.style.display = "none";
+        if(toggle2D.checked) {
+            // Only 2D open - full height
+            svgContainer.style.flex = "1";
+        }
+    }
+});
+
+let isResizing = false;
+let startY = 0;
+let startHeight = 0;
+
+resizeHandle.addEventListener("mousedown", (e) => {
+    isResizing = true;
+    startY = e.clientY;
+    startHeight = svgContainer.offsetHeight;
+    e.preventDefault();
+});
+
+// SHORTCUTS START
+
+document.querySelectorAll('#componentFields input').forEach(input => {
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('applyChangesBtn').click();
+        }
+    });
+});
+
+document.addEventListener('keydown', (e) => {
+
+    if (e.ctrlKey && e.key === 'o') {
+        e.preventDefault();
+        document.getElementById('loadJSONBtn').click();
+        if (DEBUG_MODE) {
+            console.log('⌨️ Ctrl+O: Load JSON triggered');
+        }
+    }
+    // Ctrl+Z: Undo
+    else if (e.ctrlKey && !e.shiftKey && e.key === 'z') {
+        e.preventDefault();
+        undo();
+        return;
+    }
+    
+    // Ctrl+Shift+Z or Ctrl+Y: Redo
+    else if ((e.ctrlKey && e.shiftKey && e.key === 'Z') || (e.ctrlKey && e.key === 'y')) {
+        e.preventDefault();
+        redo();
+        return;
+    } else if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        document.getElementById('exportJSONBtn').click();
+        if (DEBUG_MODE) {
+            console.log('⌨️ Ctrl+S: Save JSON triggered');
+        }
+    }
+    else if (selectedElement && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const c = selectedElement.comp;
+        const step = gridSnap ? gridSizeX : 0.1; // If grid snap is on, use grid size, if not, use 0.1cm
+        
+        switch(e.key) {
+            case 'ArrowUp':
+                c.location_y -= step;
+                break;
+            case 'ArrowDown':
+                c.location_y += step;
+                break;
+            case 'ArrowLeft':
+                c.location_x -= step;
+                break;
+            case 'ArrowRight':
+                c.location_x += step;
+                break;
+        }
+        
+        // Prevent negative values
+        c.location_x = Math.max(0, c.location_x);
+        c.location_y = Math.max(0, c.location_y);
+        
+        // Update input fields
+        document.getElementById('compX').value = toDisplayUnit(c.location_x);
+        document.getElementById('compY').value = toDisplayUnit(c.location_y);
+        
+        drawCanvas();
+        draw3D();
+        if (DEBUG_MODE) {
+            console.log(`⌨️ Arrow: Moved to (${c.location_x.toFixed(2)}, ${c.location_y.toFixed(2)})`);
+        }
+    }
+    // Shift + R: Add Rectangle
+    else if (e.shiftKey && e.key === 'R') {
+        e.preventDefault();
+        document.getElementById('addRectBtn').click();
+        if (DEBUG_MODE) {
+            console.log('⌨️ Shift+R: Rectangle added');
+        }
+    }
+    
+    // Shift + C: Add Circle
+    else if (e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        document.getElementById('addRoundedBtn').click();
+        if (DEBUG_MODE) {
+            console.log('⌨️ Shift+C: Circle added');
+        }
+    }
+    
+    // R (without Shift): Rotate selected component by 45°
+    else if (!e.shiftKey && e.key === 'r' && selectedElement) {
+        e.preventDefault();
+        const c = selectedElement.comp;
+        c.rotation = ((c.rotation || 0) + 45) % 360;
+        document.getElementById('compRot').value = c.rotation;
+        drawCanvas();
+        draw3D();
+        if (DEBUG_MODE) {
+            console.log(`⌨️ R: Rotated to ${c.rotation}°`);
+        }
+    }
+
+    // Delete key: Delete selected component
+    else if (e.key === 'Delete' && selectedElement) {
+        e.preventDefault();
+        document.getElementById('deleteCompBtn').click();
+        if (DEBUG_MODE) {
+            console.log('⌨️ Delete: Component removed');
+        }
+    }
+});
+
+// END SHORTCUTS
+
+document.addEventListener("mousemove", (e) => {
+    if (!isResizing) return;
+    const delta = e.clientY - startY;
+    const newHeight = Math.max(200, startHeight + delta);
+    const totalHeight = document.getElementById("canvasArea").offsetHeight;
+    const maxHeight = totalHeight - 200;
+    svgContainer.style.flex = `0 0 ${Math.min(newHeight, maxHeight)}px`;
+    
+    const remaining3DHeight = totalHeight - Math.min(newHeight, maxHeight) - resizeHandle.offsetHeight;
+    threeContainer.style.height = `${remaining3DHeight}px`;
+    
+    renderer.setSize(threeContainer.clientWidth, remaining3DHeight, false);
+    camera.aspect = threeContainer.clientWidth / remaining3DHeight;
+    camera.updateProjectionMatrix();
+});
+
+document.addEventListener("mouseup", () => {
+    if (isResizing) {
+        isResizing = false;
+        const totalHeight = document.getElementById("canvasArea").offsetHeight;
+        const svgHeight = svgContainer.offsetHeight;
+        const remaining3DHeight = totalHeight - svgHeight - resizeHandle.offsetHeight;
+        
+        renderer.setSize(threeContainer.clientWidth, remaining3DHeight);
+        camera.aspect = threeContainer.clientWidth / remaining3DHeight;
+        camera.updateProjectionMatrix();
+    }
+});
+
+let svgPanZoom = {
+    isPanning: false,
+    startPoint: { x: 0, y: 0 },
+    offset: { x: 0, y: 0 },
+    scale: 1,
+    minScale: 0.1,
+    maxScale: 5
+};
+
+svgContainer.addEventListener("mousedown", (e) => {
+    if ((e.button === 2 || e.button === 1) && !selectedElement) {
+        e.preventDefault();
+        svgPanZoom.isPanning = true;
+        svgPanZoom.startPoint = { x: e.clientX, y: e.clientY };
+        svgContainer.style.cursor = "grabbing";
+    }
+});
+
+svg.addEventListener("mousedown", (e) => {
+    if (selectedElement && e.button === 0) {
+        saveState();
+    }
+});
+
+svgContainer.addEventListener("mousemove", (e) => {
+    if (svgPanZoom.isPanning) {
+        const dx = e.clientX - svgPanZoom.startPoint.x;
+        const dy = e.clientY - svgPanZoom.startPoint.y;
+        
+        svgPanZoom.offset.x += dx;
+        svgPanZoom.offset.y += dy;
+        
+        updateSVGTransform();
+        
+        svgPanZoom.startPoint = { x: e.clientX, y: e.clientY };
+    }
+});
+
+svgContainer.addEventListener("mouseup", (e) => {
+    if (svgPanZoom.isPanning) {
+        svgPanZoom.isPanning = false;
+        svgContainer.style.cursor = "default";
+    }
+});
+
+svgContainer.addEventListener("mouseleave", () => {
+    if (svgPanZoom.isPanning) {
+        svgPanZoom.isPanning = false;
+        svgContainer.style.cursor = "default";
+    }
+});
+
+svgContainer.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+});
+
+svgContainer.addEventListener("wheel", (e) => {
+    if (!selectedElement) {
+        e.preventDefault();
+        
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        const newScale = svgPanZoom.scale * delta;
+        
+        if (newScale >= svgPanZoom.minScale && newScale <= svgPanZoom.maxScale) {
+            const rect = svgContainer.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            svgPanZoom.offset.x = mouseX - (mouseX - svgPanZoom.offset.x) * delta;
+            svgPanZoom.offset.y = mouseY - (mouseY - svgPanZoom.offset.y) * delta;
+            
+            svgPanZoom.scale = newScale;
+            updateSVGTransform();
+        }
+    }
+});
+
+function updateSVGTransform() {
+    svg.style.transform = `translate(${svgPanZoom.offset.x}px, ${svgPanZoom.offset.y}px) scale(${svgPanZoom.scale})`;
+    svg.style.transformOrigin = "0 0";
+}
+
+document.getElementById("sideSelector").addEventListener("change", e => {
+    svgPanZoom.offset = { x: 0, y: 0 };
+    svgPanZoom.scale = 0.9;
+    selectedSide = e.target.value;
+    drawCanvas();
+    draw3D();
+});
+
+svgContainer.addEventListener("dblclick", () => {
+    svgPanZoom.offset = { x: 0, y: 0 };
+    svgPanZoom.scale = 0.9;
+    updateSVGTransform();
+});
+
+// --- THREE.js Setup ---
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, threeContainer.clientWidth / threeContainer.clientHeight, 0.1, 1000);
+camera.position.set(15, 8, -9);
+camera.lookAt(5, 3, 5);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(threeContainer.clientWidth, threeContainer.clientHeight);
+renderer.setClearColor(0x000000);
+threeContainer.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(5, 3, 5);
+controls.update();
+
+const light = new THREE.AmbientLight(0xffffff, 0.8);
+scene.add(light);
+const dirLight = new THREE.DirectionalLight(0xffffff,0.8);
+dirLight.position.set(5,10,7);
+scene.add(dirLight);
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene,camera);
+
+    // // Debug
+    // const pos = camera.position;
+    // const target = controls.target;
+    // const distance = pos.distanceTo(target);
+    
+    // document.getElementById("camPos").textContent = 
+    //     `(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`;
+    // document.getElementById("camTarget").textContent = 
+    //     `(${target.x.toFixed(2)}, ${target.y.toFixed(2)}, ${target.z.toFixed(2)})`;
+    // document.getElementById("camDist").textContent = distance.toFixed(2) + " cm";
+}
+animate();
+
+// --- Parts logic ---
+function createEmptyPart(name){
+    const activeSides = getActiveSides();
+    const obj = {
+        "Generic": {
+            "width": parseFloat(document.getElementById("projectWidth").value) || 10,
+            "length": parseFloat(document.getElementById("projectLength").value) || 10
+        }
+    };
+    activeSides.forEach(s => {
+        obj[`${name}_${s}`] = {};
+    });
+    return obj;
+}
+
+function generateRandomId() {
+    return 'cmp_' + Math.random().toString(36).substr(2, 9);
+}
+
+function getCurrentSideKey() {
+    return `${selectedPart}_${selectedSide}`;
+}
+
+let hasUnsavedChanges = false;
+const updatePartBtn = document.getElementById("updatePartBtn");
+const originalBtnText = updatePartBtn.textContent;
+
+function markAsChanged() {
+    if (!hasUnsavedChanges) {
+        hasUnsavedChanges = true;
+        updatePartBtn.textContent = originalBtnText + " *";
+        console.log("⚠️ Unsaved changes detected");
+    }
+}
+
+function clearChangesMark() {
+    hasUnsavedChanges = false;
+    updatePartBtn.textContent = originalBtnText;
+    console.log("✅ Changes saved");
+}
+
+function updateSideSelector() {
+    const sideSelector = document.getElementById("sideSelector");
+    const currentValue = sideSelector.value;
+    sideSelector.innerHTML = "";
+    
+    const activeSides = getActiveSides();
+    const allSides = ["Front", "Back", "Top", "Bottom", "Left", "Right"];
+    
+    allSides.forEach(side => {
+        if(activeSides.includes(side)) {
+            const option = document.createElement("option");
+            option.value = side;
+            option.textContent = side;
+            sideSelector.appendChild(option);
+        }
+    });
+    
+    // If the selected side is still active, keep it selected, otherwise select the first active side
+    if(activeSides.includes(currentValue)) {
+        sideSelector.value = currentValue;
+    } else if(activeSides.length > 0) {
+        sideSelector.value = activeSides[0];
+        selectedSide = activeSides[0];
+    }
+    drawCanvas();
+}
+
+document.getElementById("updatePartBtn").addEventListener("click",()=>{
+    saveState();
+    const oldName = selectedPart;
+    const newName = document.getElementById("projectName").value || "MyProject";
+    const activeSides = getActiveSides();
+
+    if(oldName && oldName !== newName) {
+        const newPart = createEmptyPart(newName);
+
+        activeSides.forEach(side => {
+            const oldSideKey = `${oldName}_${side}`;
+            const newSideKey = `${newName}_${side}`;
+            if(parts[oldSideKey]) {
+                newPart[newSideKey] = parts[oldSideKey];
+            }
+        });
+        
+        const allSides = ["Front", "Back", "Top", "Bottom", "Left", "Right"];
+        delete parts.Generic;
+        allSides.forEach(side => {
+            delete parts[`${oldName}_${side}`];
+        });
+        
+        parts = newPart;
+        selectedPart = newName;
+    } else if(!selectedPart) {
+        const newPart = createEmptyPart(newName);
+        parts = newPart;
+        selectedPart = newName;
+    } else {
+        // Update Generic with internal values (ALWAYS CM)
+        parts.Generic = {
+            "width": internalValues.width,
+            "length": internalValues.length,
+            "height": internalValues.height,
+            "material": internalValues.material * 10, // cm → mm
+            "outer_sizing": document.getElementById("outerSizing").checked
+        };
+        const allSides = ["Front", "Back", "Top", "Bottom", "Left", "Right"];
+        allSides.forEach(side => {
+            const sideKey = `${selectedPart}_${side}`;
+            if(!activeSides.includes(side) && parts[sideKey]) {
+                delete parts[sideKey];
+            } else if(activeSides.includes(side) && !parts[sideKey]) {
+                parts[sideKey] = {};
+            }
+        });
+    }
+    clearChangesMark();
+    updateSideSelector();
+    drawCanvas();
+    draw3D();
+});
+
+function updatePartSelector(){
+    const sel = document.getElementById("partSelector");
+    sel.innerHTML="";
+    Object.keys(parts).forEach(p=>{
+        const opt = document.createElement("option");
+        opt.value=p;
+        opt.textContent=p;
+        sel.appendChild(opt);
+    });
+}
+
+function loadSidesForPart(partName){
+    selectedPart = partName;
+    selectedSide = document.getElementById("sideSelector").value;
+    drawCanvas();
+    draw3D();
+}
+
+// --- Canvas ---
+let isDragging = false;
+let dragOffset = {x:0, y:0};
+
+function drawCanvas(){
+    svg.innerHTML="";
+    if(!selectedPart) return;
+    
+    // Set canvas size based on part dimensions and selected side
+    const partWidth = internalValues.width;
+    const partLength = internalValues.length;
+    const partHeight = internalValues.height;
+    const matThick = internalValues.material;
+    const outerSizing = document.getElementById("outerSizing").checked;
+    const isDarkTheme = toggleDarkTheme.checked;
+    const textColor = isDarkTheme ? '#ffffff' : '#000000';
+    
+    
+    let canvasW, canvasH;
+
+    if(outerSizing){
+        // Outer sizing TRUE - boyutlar dış ölçü
+        const k = partHeight - matThick * 2;
+        
+        switch(selectedSide){
+            case "Front":
+            case "Back":
+                canvasW = (partWidth - matThick * 2) * pxPerCm;
+                canvasH = k * pxPerCm;
+                break;
+            case "Top":
+            case "Bottom":
+                canvasW = partWidth * pxPerCm;
+                canvasH = partLength * pxPerCm;
+                break;
+            case "Left":
+            case "Right":
+                // Left/Right Vertical - X = Height, Y = Length
+                canvasW = k * pxPerCm;
+                canvasH = partLength * pxPerCm;
+                break;
+        }
+    } else {
+        // Outer sizing FALSE - boyutlar iç boşluk
+        const b = partHeight + matThick * 2;
+        
+        switch(selectedSide){
+            case "Front":
+            case "Back":
+                canvasW = partWidth * pxPerCm;
+                canvasH = b * pxPerCm;
+                break;
+            case "Top":
+            case "Bottom":
+                canvasW = partWidth * pxPerCm;
+                canvasH = partLength * pxPerCm;
+                break;
+            case "Left":
+            case "Right":
+                // Left/Right Vertical - X = Height, Y = Length
+                canvasW = b * pxPerCm;
+                canvasH = (partLength + matThick * 2) * pxPerCm;
+                break;
+        }
+    }
+    
+    svg.setAttribute("width", canvasW);
+    svg.setAttribute("height", canvasH);
+
+    // Drawing grids
+    if(showGrid) {
+        const gridGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        gridGroup.id = "gridLines";
+        
+        const maxGridX = Math.ceil(canvasW / pxPerCm / gridSizeX);
+        const maxGridY = Math.ceil(canvasH / pxPerCm / gridSizeY);
+        const labelColor = isDarkTheme ? '#aaa' : '#666';
+
+        // Vertical lines
+        for(let i = 0; i <= maxGridX; i++){
+            const xPos = i * gridSizeX * pxPerCm;
+            if(xPos > canvasW) break;
+            
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", xPos);
+            line.setAttribute("y1", 0);
+            line.setAttribute("x2", xPos);
+            line.setAttribute("y2", canvasH);
+            line.setAttribute("stroke", "#ddd");
+            // Every 5 grids, thicker line
+            line.setAttribute("stroke-width", i % 5 === 0 ? "2" : "1");
+            gridGroup.appendChild(line);
+        }
+        
+        // Horizontal lines
+        for(let i = 0; i <= maxGridY; i++){
+            const yPos = i * gridSizeY * pxPerCm;
+            if(yPos > canvasH) break;
+
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", 0);
+            line.setAttribute("y1", yPos);
+            line.setAttribute("x2", canvasW);
+            line.setAttribute("y2", yPos);
+            line.setAttribute("stroke", "#ddd");
+            line.setAttribute("stroke-width", i % 5 === 0 ? "2" : "1");
+            gridGroup.appendChild(line);
+        }
+        
+        svg.appendChild(gridGroup);
+        
+        // Coords labels
+        for(let i = 0; i <= maxGridX; i++){
+            const xPos = i * gridSizeX * pxPerCm;
+            if(xPos > canvasW) break;
+            
+            const textX = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            textX.setAttribute("x", xPos);
+            textX.setAttribute("y", 15);
+            textX.setAttribute("text-anchor", "middle");
+            textX.setAttribute("font-size", "10");
+            textX.setAttribute("fill", labelColor);
+            const value = i * gridSizeX;
+            textX.textContent = useInches ? (value * CM_TO_INCH).toFixed(2) : value.toFixed(1);
+            svg.appendChild(textX);
+        }
+        
+        // Y axis labels
+        for(let i = 0; i <= maxGridY; i++){
+            const yPos = i * gridSizeY * pxPerCm;
+            if(yPos > canvasH) break;
+            
+            const textY = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            textY.setAttribute("x", 10);
+            textY.setAttribute("y", yPos + 4);
+            textY.setAttribute("text-anchor", "start");
+            textY.setAttribute("font-size", "10");
+            textY.setAttribute("fill", labelColor);
+            const value = i * gridSizeY;
+            textY.textContent = useInches ? (value * CM_TO_INCH).toFixed(2) : value.toFixed(1);
+            svg.appendChild(textY);
+        }
+    }
+
+    const sideKey = getCurrentSideKey();
+    const comps = parts[sideKey] || {};
+
+        Object.entries(comps).forEach(([compId, c]) => {
+        const centerX = c.location_x * pxPerCm;
+        const centerY = c.location_y * pxPerCm;
+        const rotation = c.rotation || 0;
+        
+        let visibleShape;
+        const useVisibleDiameter = c.visible_diameter && c.visible_diameter > 0;
+        
+        if(useVisibleDiameter){
+            visibleShape = document.createElementNS("http://www.w3.org/2000/svg","circle");
+            visibleShape.setAttribute("cx", centerX);
+            visibleShape.setAttribute("cy", centerY);
+            visibleShape.setAttribute("r", (c.visible_diameter/2)*pxPerCm);
+            visibleShape.setAttribute("fill","none");
+            visibleShape.setAttribute("stroke","#999");
+            visibleShape.setAttribute("stroke-width","2");
+            visibleShape.setAttribute("stroke-dasharray","5,5");
+            visibleShape.dataset.compId = compId;
+            visibleShape.style.cursor = "move";
+            visibleShape.addEventListener("mousedown", e=>selectShape(e, visibleShape, c, compId));
+            svg.appendChild(visibleShape);
+        } else if(c.visible_width && c.visible_length){
+            const vw = c.visible_width * pxPerCm;
+            const vh = c.visible_length * pxPerCm;
+            visibleShape = document.createElementNS("http://www.w3.org/2000/svg","rect");
+            visibleShape.setAttribute("x", -vw/2);
+            visibleShape.setAttribute("y", -vh/2);
+            visibleShape.setAttribute("width", vw);
+            visibleShape.setAttribute("height", vh);
+            visibleShape.setAttribute("fill","none");
+            visibleShape.setAttribute("stroke","#999");
+            visibleShape.setAttribute("stroke-width","2");
+            visibleShape.setAttribute("stroke-dasharray","5,5");
+            visibleShape.setAttribute("rx", c.rx || 0);
+            visibleShape.setAttribute("transform", `translate(${centerX},${centerY}) rotate(${rotation})`);
+            visibleShape.dataset.compId = compId;
+            visibleShape.style.cursor = "move";
+            visibleShape.addEventListener("mousedown", e=>selectShape(e, visibleShape, c, compId));
+            svg.appendChild(visibleShape);
+        }
+        
+        let drillShape;
+        const useDrillDiameter = c.drill_diameter && c.drill_diameter > 0;
+        
+        if(useDrillDiameter){
+            drillShape = document.createElementNS("http://www.w3.org/2000/svg","circle");
+            drillShape.setAttribute("cx", centerX);
+            drillShape.setAttribute("cy", centerY);
+            drillShape.setAttribute("r", (c.drill_diameter/2)*pxPerCm);
+            drillShape.setAttribute("fill","rgba(100,150,255,0.5)");
+            drillShape.setAttribute("stroke","#333");
+            drillShape.setAttribute("stroke-width","2");
+            drillShape.dataset.compId = compId;
+            drillShape.style.cursor = "move";
+            drillShape.addEventListener("mousedown", e=>selectShape(e, drillShape, c, compId));
+            svg.appendChild(drillShape);
+        } else if(c.drill_width && c.drill_length){
+            const dw = c.drill_width * pxPerCm;
+            const dh = c.drill_length * pxPerCm;
+            drillShape = document.createElementNS("http://www.w3.org/2000/svg","rect");
+            drillShape.setAttribute("x", -dw/2);
+            drillShape.setAttribute("y", -dh/2);
+            drillShape.setAttribute("width", dw);
+            drillShape.setAttribute("height", dh);
+            drillShape.setAttribute("fill","rgba(100,150,255,0.5)");
+            drillShape.setAttribute("stroke","#333");
+            drillShape.setAttribute("stroke-width","2");
+            drillShape.setAttribute("transform", `translate(${centerX},${centerY}) rotate(${rotation})`);
+            drillShape.dataset.compId = compId;
+            drillShape.style.cursor = "move";
+            drillShape.addEventListener("mousedown", e=>selectShape(e, drillShape, c, compId));
+            svg.appendChild(drillShape);
+        }
+        
+        if(c.call_name && c.call_name.trim() !== ""){
+            const text = document.createElementNS("http://www.w3.org/2000/svg","text");
+            // Text offset - visible'ın boyutuna göre
+            let textOffsetY;
+            if(c.visible_diameter){
+                textOffsetY = -(c.visible_diameter/2 * pxPerCm) - 7.5;
+            } else {
+                textOffsetY = -(c.visible_length/2 * pxPerCm) - 7.5;
+            }
+            text.setAttribute("x", 0);
+            text.setAttribute("y", textOffsetY);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("font-size", c.silkscreen_font_size);
+            text.setAttribute("fill", textColor);
+            text.setAttribute("font-weight", "bold");
+            text.setAttribute("transform", `translate(${centerX},${centerY}) rotate(${rotation})`);
+            text.textContent = c.call_name;
+            svg.appendChild(text);
+        }
+    });
+}
+
+// --- 3D preview ---
+let meshGroup = new THREE.Group();
+scene.add(meshGroup);
+
+scene.add(light);
+
+dirLight.position.set(5,10,7);
+scene.add(dirLight);
+
+// Helper arrows
+const axesHelper = new THREE.AxesHelper(3);
+axesHelper.position.set(0, 0, 0);
+scene.add(axesHelper);
+
+// Create small scene for direction indicators - ONLY ONCE
+const viewHelperScene = new THREE.Scene();
+const viewHelperCamera = new THREE.PerspectiveCamera(50, 100 / 100, 0.1, 100);
+viewHelperCamera.position.set(0, 0, 5);
+
+// Helper arrows
+const viewAxes = new THREE.AxesHelper(1);
+viewHelperScene.add(viewAxes);
+
+// Direction labels (Front, Back, etc.)
+const directionLabels = new THREE.Group();
+
+const createDirectionLabel = (text, position, cameraTarget) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.font = 'Bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 64, 32);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.position.copy(position);
+    sprite.scale.set(1, 0.5, 1);
+
+    sprite.userData = { 
+        isDirectionLabel: true, 
+        cameraTarget: cameraTarget,
+        labelText: text,
+        originalTexture: texture
+    };
+
+    return sprite;
+};
+
+function createHoverTexture(text) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#4CAF50';
+    ctx.font = 'Bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 64, 32);
+    return new THREE.CanvasTexture(canvas);
+}
+
+function getBoxCenter() {
+    const partWidth = parseFloat(document.getElementById("projectWidth").value) || 10;
+    const partLength = parseFloat(document.getElementById("projectLength").value) || 10;
+    const partHeight = parseFloat(document.getElementById("projectHeight").value) || 3;
+    const matThick = parseFloat(document.getElementById("materialThick").value) / 10;
+    const outerSizing = document.getElementById("outerSizing").checked;
+    
+    let boxWidth, boxHeight, boxLength;
+    if(outerSizing){
+        boxWidth = partWidth;
+        boxHeight = partHeight;
+        boxLength = partLength;
+    } else {
+        boxWidth = partWidth;
+        boxHeight = partHeight + matThick * 2;
+        boxLength = partLength;
+    }
+    
+    return new THREE.Vector3(boxWidth/2, boxHeight/2, boxLength/2);
+}
+
+const center = getBoxCenter();
+const distance = 20; // camera distance
+
+let hoveredSprite = null;
+
+directionLabels.add(createDirectionLabel('Back', new THREE.Vector3(0, 0, 2), 
+    { position: new THREE.Vector3(center.x, center.y, center.z + distance), target: center }));
+    
+directionLabels.add(createDirectionLabel('Front', new THREE.Vector3(0, 0, -2), 
+    { position: new THREE.Vector3(center.x, center.y, center.z - distance), target: center }));
+    
+directionLabels.add(createDirectionLabel('Top', new THREE.Vector3(0, 2, 0), 
+    { position: new THREE.Vector3(center.x, center.y + distance, center.z), target: center }));
+    
+directionLabels.add(createDirectionLabel('Bottom', new THREE.Vector3(0, -2, 0), 
+    { position: new THREE.Vector3(center.x, center.y - distance, center.z), target: center }));
+    
+directionLabels.add(createDirectionLabel('Left', new THREE.Vector3(2, 0, 0), 
+    { position: new THREE.Vector3(center.x + distance, center.y, center.z), target: center }));
+    
+directionLabels.add(createDirectionLabel('Right', new THREE.Vector3(-2, 0, 0), 
+    { position: new THREE.Vector3(center.x - distance, center.y, center.z), target: center }));
+
+viewHelperScene.add(directionLabels);
+
+// Raycaster
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+threeContainer.addEventListener('mousemove', (event) => {
+    const rect = threeContainer.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    const helperSize = 150;
+    const margin = 10;
+    const helperX = rect.width - helperSize - margin;
+    const helperY = margin;
+    
+    if (x >= helperX && x <= helperX + helperSize && 
+        y >= helperY && y <= helperY + helperSize) {
+        
+        mouse.x = ((x - helperX) / helperSize) * 2 - 1;
+        mouse.y = -((y - helperY) / helperSize) * 2 + 1;
+        
+        raycaster.setFromCamera(mouse, viewHelperCamera);
+        const intersects = raycaster.intersectObjects(directionLabels.children, true);
+        
+        if (intersects.length > 0) {
+            const sprite = intersects[0].object;
+            
+            if (sprite.userData.isDirectionLabel) {
+                // New sprite hover
+                if (hoveredSprite !== sprite) {
+                    // Restore previous sprite to original texture
+                    if (hoveredSprite && hoveredSprite.userData.originalTexture) {
+                        hoveredSprite.material.map = hoveredSprite.userData.originalTexture;
+                        hoveredSprite.material.needsUpdate = true;
+                    }
+                    
+                    // Create hover texture for the new sprite
+                    hoveredSprite = sprite;
+                    if (!sprite.userData.hoverTexture) {
+                        sprite.userData.hoverTexture = createHoverTexture(sprite.userData.labelText);
+                    }
+                    sprite.material.map = sprite.userData.hoverTexture;
+                    sprite.material.needsUpdate = true;
+                }
+                
+                threeContainer.style.cursor = 'pointer';
+                return;
+            }
+        }
+        
+        if (hoveredSprite) {
+            hoveredSprite.material.map = hoveredSprite.userData.originalTexture;
+            hoveredSprite.material.needsUpdate = true;
+            hoveredSprite = null;
+        }
+        threeContainer.style.cursor = 'default';
+    } else {
+
+        if (hoveredSprite) {
+            hoveredSprite.material.map = hoveredSprite.userData.originalTexture;
+            hoveredSprite.material.needsUpdate = true;
+            hoveredSprite = null;
+        }
+        threeContainer.style.cursor = 'default';
+    }
+});
+
+// Mouse leave - hide tooltip
+threeContainer.addEventListener('mouseleave', () => {
+    if (hoveredSprite) {
+        hoveredSprite.material.map = hoveredSprite.userData.originalTexture;
+        hoveredSprite.material.needsUpdate = true;
+        hoveredSprite = null;
+    }
+    threeContainer.style.cursor = 'default';
+});
+
+threeContainer.addEventListener('click', (event) => {
+    const rect = threeContainer.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    const helperSize = 150;
+    const margin = 10;
+    const helperX = rect.width - helperSize - margin;
+    const helperY = margin;
+    
+    if (x >= helperX && x <= helperX + helperSize && 
+        y >= helperY && y <= helperY + helperSize) {
+        
+        mouse.x = ((x - helperX) / helperSize) * 2 - 1;
+        mouse.y = -((y - helperY) / helperSize) * 2 + 1;
+        
+        raycaster.setFromCamera(mouse, viewHelperCamera);
+        const intersects = raycaster.intersectObjects(directionLabels.children, true);
+        
+        if (intersects.length > 0) {
+            const clicked = intersects[0].object;
+            if (clicked.userData.isDirectionLabel) {
+                const target = clicked.userData.cameraTarget;
+                animateCameraTo(target.position, target.target);
+                if(DEBUG_MODE) {
+                    console.log(`📷 Camera moved to: ${clicked.userData.labelText}`);
+                }
+            }
+        }
+    }
+});
+
+function animateCameraTo(targetPos, targetLookAt) {
+    const duration = 1000; // 1 saniye
+    const startPos = camera.position.clone();
+    const startTarget = controls.target.clone();
+    const startTime = Date.now();
+    
+    function animate() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Ease-in-out interpolation
+        const easeProgress = progress < 0.5 
+            ? 2 * progress * progress 
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+        // Interpolate camera position
+        camera.position.lerpVectors(startPos, targetPos, easeProgress);
+        controls.target.lerpVectors(startTarget, targetLookAt, easeProgress);
+        controls.update();
+        
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        }
+    }
+    
+    animate();
+}
+
+function animate_helper() {
+    requestAnimationFrame(animate_helper);
+    controls.update();
+
+    // Render main scene
+    renderer.setClearColor(0x000000);
+    renderer.render(scene, camera);
+
+    // Render direction indicators (top right corner)
+    const helperSize = 150;
+    const margin = 10;
+    renderer.setViewport(
+        threeContainer.clientWidth - helperSize - margin,
+        threeContainer.clientHeight - helperSize - margin,
+        helperSize,
+        helperSize
+    );
+    renderer.setScissor(
+        threeContainer.clientWidth - helperSize - margin,
+        threeContainer.clientHeight - helperSize - margin,
+        helperSize,
+        helperSize
+    );
+    renderer.setScissorTest(true);
+    renderer.setClearColor(0x333333, 0.8);
+
+    // Sync direction indicator camera with main camera
+    viewHelperCamera.position.copy(camera.position);
+    viewHelperCamera.position.sub(controls.target);
+    viewHelperCamera.position.setLength(5);
+    viewHelperCamera.lookAt(viewHelperScene.position);
+    
+    renderer.render(viewHelperScene, viewHelperCamera);
+
+    // Reset viewport and scissor
+    renderer.setScissorTest(false);
+    renderer.setViewport(0, 0, threeContainer.clientWidth, threeContainer.clientHeight);
+    renderer.setClearColor(0x000000);
+}
+animate_helper();
+
+function draw3D(){
+    while(meshGroup.children.length) meshGroup.remove(meshGroup.children[0]);
+    if(!selectedPart) return;
+
+    const partWidth = internalValues.width;
+    const partLength = internalValues.length;
+    const partHeight = internalValues.height;
+    const matThick = internalValues.material;
+    const outerSizing = document.getElementById("outerSizing").checked;
+
+    const yOffset = outerSizing ? matThick : 0;
+    const xOffset = outerSizing ? 0 : matThick;
+
+    let boxWidth, boxHeight, boxLength;
+    
+    if(outerSizing){
+        boxWidth = partWidth;
+        boxHeight = partHeight;
+        boxLength = partLength;
+    } else {
+        boxWidth = partWidth;
+        boxHeight = partHeight + matThick * 2;
+        boxLength = partLength;
+    }
+
+    // Main box wireframe
+    const boxGeo = new THREE.BoxGeometry(boxWidth, boxHeight, boxLength);
+    const edges = new THREE.EdgesGeometry(boxGeo);
+    const lineMat = new THREE.LineBasicMaterial({color: 0x999999, linewidth: 1});
+    const wireframe = new THREE.LineSegments(edges, lineMat);
+    wireframe.position.set(boxWidth/2, boxHeight/2, boxLength/2);
+    meshGroup.add(wireframe);
+
+    const activeSides = getActiveSides();
+    const panelMat = new THREE.MeshStandardMaterial({
+        color: 0xadd8e6, 
+        opacity: 0.6, 
+        transparent: true,
+        side: THREE.DoubleSide
+    });
+
+    let topBottomW, topBottomL;
+    let leftRightL, leftRightH;
+    let frontBackW, frontBackH;
+
+    let frontZ, backZ, topY, bottomY, rightX, leftX;
+    
+    if(outerSizing){
+        const k = partHeight - matThick * 2;
+        topBottomW = partWidth;
+        topBottomL = partLength;
+        leftRightL = partLength;
+        leftRightH = k;
+        frontBackW = partWidth - matThick * 2;
+        frontBackH = k;
+
+        // Outer sizing pos
+        frontZ = matThick/2;
+        backZ = boxLength - matThick/2;
+        topY = boxHeight - matThick/2;
+        bottomY = matThick/2;
+        rightX = matThick/2;
+        leftX = boxWidth - matThick/2;
+    } else {
+        const b = partHeight + matThick * 2;
+        topBottomW = partWidth;
+        topBottomL = partLength;
+        leftRightL = partLength + matThick * 2;
+        leftRightH = b;
+        frontBackW = partWidth;
+        frontBackH = b;
+
+        // Inner sizing pos
+        frontZ = -matThick/2;
+        backZ = boxLength + matThick/2;
+        topY = boxHeight - matThick/2;
+        bottomY = matThick/2;
+        rightX = -matThick/2;
+        leftX = boxWidth + matThick/2;
+    }
+
+    activeSides.forEach(side => {
+        let panelGeom, panelMesh;
+        
+        switch(side){
+            case "Front":
+                panelGeom = new THREE.BoxGeometry(frontBackW, frontBackH, matThick);
+                panelMesh = new THREE.Mesh(panelGeom, panelMat);
+                panelMesh.position.set(boxWidth/2, boxHeight/2, frontZ);
+                meshGroup.add(panelMesh);
+                break;
+                
+            case "Back":
+                panelGeom = new THREE.BoxGeometry(frontBackW, frontBackH, matThick);
+                panelMesh = new THREE.Mesh(panelGeom, panelMat);
+                panelMesh.position.set(boxWidth/2, boxHeight/2, backZ);
+                meshGroup.add(panelMesh);
+                break;
+                
+            case "Top":
+                panelGeom = new THREE.BoxGeometry(topBottomW, matThick, topBottomL);
+                panelMesh = new THREE.Mesh(panelGeom, panelMat);
+                panelMesh.position.set(boxWidth/2, topY, boxLength/2);
+                meshGroup.add(panelMesh);
+                break;
+                
+            case "Bottom":
+                panelGeom = new THREE.BoxGeometry(topBottomW, matThick, topBottomL);
+                panelMesh = new THREE.Mesh(panelGeom, panelMat);
+                panelMesh.position.set(boxWidth/2, bottomY, boxLength/2);
+                meshGroup.add(panelMesh);
+                break;
+                
+            case "Right":
+                panelGeom = new THREE.BoxGeometry(matThick, leftRightH, leftRightL);
+                panelMesh = new THREE.Mesh(panelGeom, panelMat);
+                
+                if(outerSizing){
+                    panelMesh.position.set(rightX, boxHeight/2, boxLength/2);
+                } else {
+                    panelMesh.position.set(rightX, boxHeight/2, boxLength/2);
+                }
+                meshGroup.add(panelMesh);
+                break;
+                
+            case "Left":
+                panelGeom = new THREE.BoxGeometry(matThick, leftRightH, leftRightL);
+                panelMesh = new THREE.Mesh(panelGeom, panelMat);
+                if(outerSizing){
+                    panelMesh.position.set(leftX, boxHeight/2, boxLength/2);
+                } else {
+                    panelMesh.position.set(leftX, boxHeight/2, boxLength/2);
+                }
+                meshGroup.add(panelMesh);
+                break;
+        }
+    });
+
+    const allSides = ["Front","Back","Top","Bottom","Left","Right"];
+    const colors = [0xff3333, 0x33ff33, 0x3333ff, 0xffff33, 0xff33ff, 0x33ffff];
+
+    allSides.forEach((side, sideIdx) => {
+        if(!activeSides.includes(side)) return;
+        
+        const sideKey = `${selectedPart}_${side}`;
+        const comps = parts[sideKey] || {};
+        
+        Object.values(comps).forEach(c => {
+            let visibleGeom, visibleMesh, drillGeom, drillMesh;
+            
+            const useVisibleDiameter = c.visible_diameter && c.visible_diameter > 0;
+            const useDrillDiameter = c.drill_diameter && c.drill_diameter > 0;
+            
+            const visibleW = c.visible_width;
+            const visibleL = c.visible_length;
+            const drillW = c.drill_width || c.visible_width;
+            const drillL = c.drill_length || c.visible_length;
+
+            const visibleMat = new THREE.MeshStandardMaterial({
+                color: 0x888888, 
+                opacity: 0.2, 
+                transparent: true,
+                side: THREE.DoubleSide
+            });
+            
+            const drillMat = new THREE.MeshStandardMaterial({
+                color: colors[sideIdx], 
+                opacity: 0.8, 
+                transparent: true
+            });
+        // Add components
+        switch(side){
+            case "Front":
+                const y3D_front = boxHeight - c.location_y - yOffset;
+                const x3D_front = boxWidth - c.location_x - matThick * outerSizing;
+                
+                if(useVisibleDiameter){
+                    visibleGeom = new THREE.CylinderGeometry(c.visible_diameter/2, c.visible_diameter/2, matThick, 32);
+                    visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
+                    visibleMesh.rotation.x = Math.PI/2;
+                    visibleMesh.position.set(x3D_front, y3D_front, frontZ);
+                    meshGroup.add(visibleMesh);
+                } else if(visibleW && visibleL){
+                    visibleGeom = new THREE.BoxGeometry(visibleW, visibleL, matThick);
+                    visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
+                    visibleMesh.position.set(x3D_front, y3D_front, frontZ);
+                    visibleMesh.rotation.z = (c.rotation||0) * Math.PI/180;
+                    meshGroup.add(visibleMesh);
+                }
+                
+                if(useDrillDiameter){
+                    drillGeom = new THREE.CylinderGeometry(c.drill_diameter/2, c.drill_diameter/2, matThick, 32);
+                    drillMesh = new THREE.Mesh(drillGeom, drillMat);
+                    drillMesh.rotation.x = Math.PI/2;
+                    drillMesh.position.set(x3D_front, y3D_front, frontZ);
+                    meshGroup.add(drillMesh);
+                } else if(drillW && drillL){
+                    drillGeom = new THREE.BoxGeometry(drillW, drillL, matThick);
+                    drillMesh = new THREE.Mesh(drillGeom, drillMat);
+                    drillMesh.position.set(x3D_front, y3D_front, frontZ);
+                    drillMesh.rotation.z = (c.rotation||0) * Math.PI/180;
+                    meshGroup.add(drillMesh);
+                }
+                break;
+
+            case "Back":
+                const y3D_back = c.location_y + yOffset;
+                const x3D_back = boxWidth - c.location_x - matThick * outerSizing;
+
+                if(useVisibleDiameter){
+                    visibleGeom = new THREE.CylinderGeometry(c.visible_diameter/2, c.visible_diameter/2, matThick, 32);
+                    visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
+                    visibleMesh.rotation.x = Math.PI/2;
+                    visibleMesh.position.set(x3D_back, y3D_back, backZ);
+                    meshGroup.add(visibleMesh);
+                } else if(visibleW && visibleL){
+                    visibleGeom = new THREE.BoxGeometry(visibleW, visibleL, matThick);
+                    visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
+                    visibleMesh.position.set(x3D_back, y3D_back, backZ);
+                    visibleMesh.rotation.z = (c.rotation||0) * Math.PI/180;
+                    meshGroup.add(visibleMesh);
+                }
+                
+                if(useDrillDiameter){
+                    drillGeom = new THREE.CylinderGeometry(c.drill_diameter/2, c.drill_diameter/2, matThick, 32);
+                    drillMesh = new THREE.Mesh(drillGeom, drillMat);
+                    drillMesh.rotation.x = Math.PI/2;
+                    drillMesh.position.set(x3D_back, y3D_back, backZ);
+                    meshGroup.add(drillMesh);
+                } else if(drillW && drillL){
+                    drillGeom = new THREE.BoxGeometry(drillW, drillL, matThick);
+                    drillMesh = new THREE.Mesh(drillGeom, drillMat);
+                    drillMesh.position.set(x3D_back, y3D_back, backZ);
+                    drillMesh.rotation.z = (c.rotation||0) * Math.PI/180;
+                    meshGroup.add(drillMesh);
+                }
+                break;
+
+            case "Top":
+                const z3D_top = boxLength - c.location_y;
+                const x3D_top = boxWidth - c.location_x;
+                
+                if(useVisibleDiameter){
+                    visibleGeom = new THREE.CylinderGeometry(c.visible_diameter/2, c.visible_diameter/2, matThick, 32);
+                    visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
+                    visibleMesh.position.set(x3D_top, topY, z3D_top);
+                    meshGroup.add(visibleMesh);
+                } else if(visibleW && visibleL){
+                    visibleGeom = new THREE.BoxGeometry(visibleW, matThick, visibleL);
+                    visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
+                    visibleMesh.position.set(x3D_top, topY, z3D_top);
+                    visibleMesh.rotation.y = (c.rotation||0) * Math.PI/180;
+                    meshGroup.add(visibleMesh);
+                }
+                
+                if(useDrillDiameter){
+                    drillGeom = new THREE.CylinderGeometry(c.drill_diameter/2, c.drill_diameter/2, matThick, 32);
+                    drillMesh = new THREE.Mesh(drillGeom, drillMat);
+                    drillMesh.position.set(x3D_top, topY, z3D_top);
+                    meshGroup.add(drillMesh);
+                } else if(drillW && drillL){
+                    drillGeom = new THREE.BoxGeometry(drillW, matThick, drillL);
+                    drillMesh = new THREE.Mesh(drillGeom, drillMat);
+                    drillMesh.position.set(x3D_top, topY, z3D_top);
+                    drillMesh.rotation.y = (c.rotation||0) * Math.PI/180;
+                    meshGroup.add(drillMesh);
+                }
+                break;
+
+            case "Bottom":
+                const z3D_bottom = boxLength - c.location_y;
+                const x3D_bottom = boxWidth - c.location_x;
+                
+                if(useVisibleDiameter){
+                    visibleGeom = new THREE.CylinderGeometry(c.visible_diameter/2, c.visible_diameter/2, matThick, 32);
+                    visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
+                    visibleMesh.position.set(x3D_bottom, bottomY, z3D_bottom);
+                    meshGroup.add(visibleMesh);
+                } else if(visibleW && visibleL){
+                    visibleGeom = new THREE.BoxGeometry(visibleW, matThick, visibleL);
+                    visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
+                    visibleMesh.position.set(x3D_bottom, bottomY, z3D_bottom);
+                    visibleMesh.rotation.y = (c.rotation||0) * Math.PI/180;
+                    meshGroup.add(visibleMesh);
+                }
+                
+                if(useDrillDiameter){
+                    drillGeom = new THREE.CylinderGeometry(c.drill_diameter/2, c.drill_diameter/2, matThick, 32);
+                    drillMesh = new THREE.Mesh(drillGeom, drillMat);
+                    drillMesh.position.set(x3D_bottom, bottomY, z3D_bottom);
+                    meshGroup.add(drillMesh);
+                } else if(drillW && drillL){
+                    drillGeom = new THREE.BoxGeometry(drillW, matThick, drillL);
+                    drillMesh = new THREE.Mesh(drillGeom, drillMat);
+                    drillMesh.position.set(x3D_bottom, bottomY, z3D_bottom);
+                    drillMesh.rotation.y = (c.rotation||0) * Math.PI/180;
+                    meshGroup.add(drillMesh);
+                }
+                break;
+
+            case "Right":
+                const y3D_right = boxHeight - c.location_x - yOffset;
+                const z3D_right = boxLength - c.location_y + xOffset;
+                
+                if(useVisibleDiameter){
+                    visibleGeom = new THREE.CylinderGeometry(c.visible_diameter/2, c.visible_diameter/2, matThick, 32);
+                    visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
+                    visibleMesh.rotation.z = Math.PI/2;
+                    visibleMesh.position.set(rightX, y3D_right, z3D_right);
+                    meshGroup.add(visibleMesh);
+                } else if(visibleW && visibleL){
+                    visibleGeom = new THREE.BoxGeometry(matThick, visibleL, visibleW);
+                    visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
+                    visibleMesh.position.set(rightX, y3D_right, z3D_right);
+                    visibleMesh.rotation.x = (c.rotation||0) * Math.PI/180;
+                    meshGroup.add(visibleMesh);
+                }
+                
+                if(useDrillDiameter){
+                    drillGeom = new THREE.CylinderGeometry(c.drill_diameter/2, c.drill_diameter/2, matThick, 32);
+                    drillMesh = new THREE.Mesh(drillGeom, drillMat);
+                    drillMesh.rotation.z = Math.PI/2;
+                    drillMesh.position.set(rightX, y3D_right, z3D_right);
+                    meshGroup.add(drillMesh);
+                } else if(drillW && drillL){
+                    drillGeom = new THREE.BoxGeometry(matThick, drillL, drillW);
+                    drillMesh = new THREE.Mesh(drillGeom, drillMat);
+                    drillMesh.position.set(rightX, y3D_right, z3D_right);
+                    drillMesh.rotation.x = (c.rotation||0) * Math.PI/180;
+                    meshGroup.add(drillMesh);
+                }
+                break;
+
+            case "Left":
+                const y3D_left = c.location_x + yOffset;
+                const z3D_left = boxLength - c.location_y + xOffset;
+                
+                if(useVisibleDiameter){
+                    visibleGeom = new THREE.CylinderGeometry(c.visible_diameter/2, c.visible_diameter/2, matThick, 32);
+                    visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
+                    visibleMesh.rotation.z = Math.PI/2;
+                    visibleMesh.position.set(leftX, y3D_left, z3D_left);
+                    meshGroup.add(visibleMesh);
+                } else if(visibleW && visibleL){
+                    visibleGeom = new THREE.BoxGeometry(matThick, visibleL, visibleW);
+                    visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
+                    visibleMesh.position.set(leftX, y3D_left, z3D_left);
+                    visibleMesh.rotation.x = (c.rotation||0) * Math.PI/180;
+                    meshGroup.add(visibleMesh);
+                }
+                
+                if(useDrillDiameter){
+                    drillGeom = new THREE.CylinderGeometry(c.drill_diameter/2, c.drill_diameter/2, matThick, 32);
+                    drillMesh = new THREE.Mesh(drillGeom, drillMat);
+                    drillMesh.rotation.z = Math.PI/2;
+                    drillMesh.position.set(leftX, y3D_left, z3D_left);
+                    meshGroup.add(drillMesh);
+                } else if(drillW && drillL){
+                    drillGeom = new THREE.BoxGeometry(matThick, drillL, drillW);
+                    drillMesh = new THREE.Mesh(drillGeom, drillMat);
+                    drillMesh.position.set(leftX, y3D_left, z3D_left);
+                    drillMesh.rotation.x = (c.rotation||0) * Math.PI/180;
+                    meshGroup.add(drillMesh);
+                }
+                break;
+        }
+        });
+    });
+}
+
+["Front", "Back", "Top", "Bottom", "Left", "Right"].forEach(side => {
+    document.getElementById(`sideCheck${side}`).addEventListener("change", () => {
+        markAsChanged();
+        updateSideSelector();
+        if (DEBUG_MODE) {
+            console.log(`${side} changed - click Update Sides to apply`);
+        }
+    });
+});
+
+
+// --- Select & update ---
+function selectShape(e,shape,comp, compId){
+    selectedElement = {shape, comp, compId};
+    isDragging = true;
+    const rect = svg.getBoundingClientRect();
+    const mouseX = (e.clientX - rect.left) / pxPerCm;
+    const mouseY = (e.clientY - rect.top) / pxPerCm;
+    
+    dragOffset.x = mouseX - comp.location_x;
+    dragOffset.y = mouseY - comp.location_y;
+    
+    document.getElementById("noSelection").style.display = "none";
+    document.getElementById("componentFields").style.display = "block";
+
+    document.getElementById("compName").value = comp.call_name || "";
+    document.getElementById("compFontSize").value = comp.silkscreen_font_size || 12;
+    
+    document.getElementById("compX").value = toDisplayUnit(comp.location_x);
+    document.getElementById("compY").value = toDisplayUnit(comp.location_y);
+    document.getElementById("compRot").value = comp.rotation || 0;
+    
+    document.getElementById("compVD").value = comp.visible_diameter ? toDisplayUnit(comp.visible_diameter) : "";
+    document.getElementById("compVW").value = comp.visible_width ? toDisplayUnit(comp.visible_width) : "";
+    document.getElementById("compVL").value = comp.visible_length ? toDisplayUnit(comp.visible_length) : "";
+    
+    const isCircleDrill = comp.drill_diameter !== undefined;
+    
+    if(isCircleDrill){
+        document.getElementById("drillCircle").style.display = "block";
+        document.getElementById("drillRect").style.display = "none";
+        document.getElementById("compDD").value = comp.drill_diameter ? toDisplayUnit(comp.drill_diameter) : "";
+    } else {
+        document.getElementById("drillCircle").style.display = "none";
+        document.getElementById("drillRect").style.display = "block";
+        document.getElementById("compDW").value = comp.drill_width ? toDisplayUnit(comp.drill_width) : "";
+        document.getElementById("compDL").value = comp.drill_length ? toDisplayUnit(comp.drill_length) : "";
+    }
+
+    e.preventDefault();
+}
+
+function updateCommandOutput() {
+    const projectName = document.getElementById("projectName").value || "MyProject";
+    const materialThickness = parseFloat(document.getElementById("materialThick").value || "3");
+    const boxHeight = parseFloat(document.getElementById("projectHeight").value || "30");
+    const outerSizing = document.getElementById("outerSizing").checked;
+
+    let command = `--json-file ${projectName}.json --material-thickness ${materialThickness.toFixed(2)} --box-height-3d ${boxHeight.toFixed(2)}`;
+
+    if (outerSizing) {
+        command += ` --outer-sizing`;
+    }
+    
+    command += ` --output-directory outputFolder`;
+    
+    document.getElementById("commandOutput").value = command;
+}
+
+// Copy command to clipboard
+document.getElementById("copyCommandBtn").addEventListener("click", () => {
+    const commandText = document.getElementById("commandOutput");
+    commandText.select();
+    commandText.setSelectionRange(0, 99999); // Mobile uyumluluk
+    
+    navigator.clipboard.writeText(commandText.value).then(() => {
+        const btn = document.getElementById("copyCommandBtn");
+        const originalText = btn.textContent;
+        btn.textContent = "✅ Copied!";
+        btn.style.background = "#4CAF50";
+        btn.style.color = "white";
+        
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = "";
+            btn.style.color = "";
+        }, 2000);
+    }).catch(err => {
+        alert("❌ Failed to copy: " + err);
+    });
+});
+
+svg.addEventListener("mousemove", (e)=>{
+    if(!isDragging || !selectedElement) return;
+    
+    const rect = svg.getBoundingClientRect();
+    let newX = (e.clientX - rect.left) / pxPerCm - dragOffset.x;
+    let newY = (e.clientY - rect.top) / pxPerCm - dragOffset.y;
+    
+    if(gridSnap){
+        newX = Math.round(newX / gridSizeX) * gridSizeX;
+        newY = Math.round(newY / gridSizeY) * gridSizeY;
+    }
+    
+    selectedElement.comp.location_x = newX;
+    selectedElement.comp.location_y = newY;
+    
+    document.getElementById("compX").value = toDisplayUnit(newX);
+    document.getElementById("compY").value = toDisplayUnit(newY);
+
+    drawCanvas();
+    draw3D();
+});
+
+updateLabels();
+
+svg.addEventListener("mouseup", ()=>{
+    isDragging = false;
+});
+
+svg.addEventListener("mouseleave", ()=>{
+    isDragging = false;
+});
+
+document.getElementById("applyChangesBtn").addEventListener("click",()=>{
+    if(!selectedElement) return;
+    saveState();
+    const c = selectedElement.comp;
+    
+    const name = document.getElementById("compName").value;
+    const fontSize = parseFloat(document.getElementById("compFontSize").value);
+    
+    // Conver to cm
+    const x = fromDisplayUnit(document.getElementById("compX").value);
+    const y = fromDisplayUnit(document.getElementById("compY").value);
+    const rotation = parseFloat(document.getElementById("compRot").value);
+    const vd = fromDisplayUnit(document.getElementById("compVD").value);
+    const vw = fromDisplayUnit(document.getElementById("compVW").value);
+    const vl = fromDisplayUnit(document.getElementById("compVL").value);
+    
+    if(vd < 0 || vw < 0 || vl < 0){
+        alert("❌ Visible values cannot be negative!");
+        return;
+    }
+
+    if(fontSize < 1){
+        alert("❌ Font size must be at least 1!");
+        return;
+    }
+    
+    const isDrillCircleVisible = document.getElementById("drillCircle").style.display !== "none";
+    
+    let dd, dw, dl;
+    
+    if(isDrillCircleVisible){
+        dd = fromDisplayUnit(document.getElementById("compDD").value);
+        if(dd < 0.01){
+            alert(`❌ Drill diameter cannot be smaller than 0.01 ${getUnitLabel()}!`);
+            return;
+        }
+    } else {
+        dw = fromDisplayUnit(document.getElementById("compDW").value);
+        dl = fromDisplayUnit(document.getElementById("compDL").value);
+        if(dw < 0.01 || dl < 0.01){
+            alert(`❌ Drill width and length cannot be smaller than 0.01 ${getUnitLabel()}!`);
+            return;
+        }
+    }
+    
+    c.call_name = name;
+    c.silkscreen_font_size = fontSize;
+    c.location_x = x;
+    c.location_y = y;
+    c.rotation = rotation;
+    
+    if(isDrillCircleVisible){
+        c.drill_diameter = (isNaN(dd) || dd === 0) ? undefined : dd;
+        c.drill_width = undefined;
+        c.drill_length = undefined;
+    } else {
+        c.drill_width = (isNaN(dw) || dw === 0) ? undefined : dw;
+        c.drill_length = (isNaN(dl) || dl === 0) ? undefined : dl;
+        c.drill_diameter = undefined;
+    }
+    
+    c.visible_diameter = (isNaN(vd) || vd === 0) ? undefined : vd;
+    c.visible_width = (isNaN(vw) || vw === 0) ? undefined : vw;
+    c.visible_length = (isNaN(vl) || vl === 0) ? undefined : vl;
+
+    if (DEBUG_MODE) {
+        console.log("Applied values (in cm):", c);
+    }
+
+    drawCanvas();
+    draw3D();
+});
+
+document.getElementById("deleteCompBtn").addEventListener("click",()=>{
+    if(!selectedElement) return;
+    saveState();
+    const sideKey = getCurrentSideKey();
+    delete parts[sideKey][selectedElement.compId];
+    selectedElement = null;
+
+    document.getElementById("componentFields").style.display = "none";
+    document.getElementById("noSelection").style.display = "block";
+
+    drawCanvas();
+    draw3D();
+});
+
+document.getElementById("projectName").addEventListener("change", e=>{
+    updateCommandOutput();
+});
+
+document.getElementById("sideSelector").addEventListener("change", e=>{
+    selectedSide = e.target.value;
+    drawCanvas();
+    draw3D();
+});
+
+// --- Add rect / rounded ---
+document.getElementById("addRectBtn").addEventListener("click",()=>{
+    if(!selectedPart) return;
+
+    const partWidth = parseFloat(document.getElementById("projectWidth").value);
+    const partLength = parseFloat(document.getElementById("projectLength").value);
+    const partHeight = parseFloat(document.getElementById("projectHeight").value);
+    const cSideKey = getCurrentSideKey();
+    let startX, startY;
+    
+    const activeSides = getActiveSides();
+    if(activeSides.length === 0) {
+        alert("❌ Please enable at least one side before adding components!");
+        return;
+    }
+    if(!parts[cSideKey]) {
+        alert("❌ Please click 'Update Sides' button before adding components!");
+        return;
+    }
+
+    saveState();
+    const w=1,l=1;
+
+    switch(selectedSide){
+        case "Front":
+        case "Back":
+            startX = partWidth / 2;
+            startY = partHeight / 2;
+            break;
+        case "Top":
+        case "Bottom":
+            startX = partWidth / 2;
+            startY = partLength / 2;
+            break;
+        case "Left":
+        case "Right":
+            startX = partHeight / 2;
+            startY = partLength / 2;
+            break;
+    }
+
+    const newComp = {
+        call_name:"",
+        silkscreen_font_size: 12,
+        location_x: startX,
+        location_y: startY,
+        visible_width: w,
+        visible_length: l,
+        drill_width: w,
+        drill_length: l,
+        rotation: 0
+    };
+    const sideKey = getCurrentSideKey();
+    const compId = generateRandomId();
+    parts[sideKey][compId] = newComp;
+    drawCanvas();
+    draw3D();
+});
+
+document.getElementById("addRoundedBtn").addEventListener("click",()=>{
+    if(!selectedPart) return;
+
+    const partWidth = parseFloat(document.getElementById("projectWidth").value);
+    const partLength = parseFloat(document.getElementById("projectLength").value);
+    const partHeight = parseFloat(document.getElementById("projectHeight").value);
+    const cSideKey = getCurrentSideKey();
+
+    let startX, startY;
+
+    const activeSides = getActiveSides();
+    if(activeSides.length === 0) {
+        alert("❌ Please enable at least one side before adding components!");
+        return;
+    }
+    if(!parts[cSideKey]) {
+        alert("❌ Please click 'Update Sides' button before adding components!");
+        return;
+    }
+    const d=1;
+    saveState();
+    switch(selectedSide){
+        case "Front":
+        case "Back":
+            startX = partWidth / 2;
+            startY = partHeight / 2;
+            break;
+        case "Top":
+        case "Bottom":
+            startX = partWidth / 2;
+            startY = partLength / 2;
+            break;
+        case "Left":
+        case "Right":
+            startX = partHeight / 2;
+            startY = partLength / 2;
+            break;
+    }
+
+    const newComp = {
+        call_name:"",
+        silkscreen_font_size: 12,
+        location_x: startX,
+        location_y: startY,
+        visible_width: d,
+        visible_length: d,
+        drill_diameter: d,
+        visible_diameter: d,
+        rotation:0
+    };
+    const sideKey = getCurrentSideKey();
+    const compId = generateRandomId();
+    parts[sideKey][compId] = newComp;
+    drawCanvas();
+    draw3D();
+});
+
+// --- Export JSON ---
+document.getElementById("exportJSONBtn").addEventListener("click",()=>{
+    const projectName = document.getElementById("projectName").value || "MyProject";
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(parts,null,2));
+    const dlAnchor = document.createElement("a");
+    dlAnchor.setAttribute("href",dataStr);
+    dlAnchor.setAttribute("download",`${projectName}.json`);
+    dlAnchor.click();
+});
+
+// --- Show JSON Modal ---
+document.getElementById("showJSONBtn").addEventListener("click", () => {
+    const jsonStr = JSON.stringify(parts, null, 2);
+    document.getElementById("jsonDisplay").textContent = jsonStr;
+    document.getElementById("jsonModal").classList.add("show");
+});
+
+// Close modal
+document.getElementById("closeJsonBtn").addEventListener("click", () => {
+    document.getElementById("jsonModal").classList.remove("show");
+});
+
+// Close modal if clicked outside content
+document.getElementById("jsonModal").addEventListener("click", (e) => {
+    if(e.target.id === "jsonModal") {
+        document.getElementById("jsonModal").classList.remove("show");
+    }
+});
+
+document.getElementById("outerSizing").addEventListener("change", (e) => {
+    if(selectedPart){
+        saveState();
+        parts.Generic.outer_sizing = e.target.checked;
+        updateCommandOutput();
+        drawCanvas();
+        draw3D();
+        if (DEBUG_MODE) {
+            console.log("Outer sizing changed to:", e.target.checked);
+        }
+    }
+});
+
+document.getElementById("undoBtn").addEventListener("click", undo);
+document.getElementById("redoBtn").addEventListener("click", redo);
+
+document.getElementById("helpBtn").addEventListener("click", () => {
+    document.getElementById("helpModal").classList.add("show");
+});
+
+document.getElementById("closeHelpBtn").addEventListener("click", () => {
+    document.getElementById("helpModal").classList.remove("show");
+});
+
+document.getElementById("helpModal").addEventListener("click", (e) => {
+    if(e.target.id === "helpModal") {
+        document.getElementById("helpModal").classList.remove("show");
+    }
+});
+
+document.getElementById("loadJSONBtn").addEventListener("click", () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    
+    input.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const loadedData = JSON.parse(event.target.result);
+                
+                // Validate
+                if (!loadedData.Generic) {
+                    alert("❌ Invalid JSON file! Missing 'Generic' section.");
+                    return;
+                }
+                
+                // Load data
+                parts = loadedData;
+                
+                // Convert main parts to top parts if necessary - backwards compatibility
+                const partKeys = Object.keys(parts).filter(k => k !== "Generic");
+                partKeys.forEach(key => {
+                    if (key.endsWith("_Main")) {
+                        const partName = key.split("_")[0];
+                        const newKey = `${partName}_Top`;
+                        parts[newKey] = parts[key];
+                        delete parts[key];
+                        console.log(`Converted ${key} to ${newKey}`);
+                    }
+                });
+                
+                // Load generic data into the form
+                const generic = parts.Generic;
+                internalValues.width = generic.width || 10;
+                internalValues.length = generic.length || 10;
+                internalValues.height = (generic.height || 30) / 10; // mm → cm
+                internalValues.material = (generic.material || 3) / 10; // mm → cm
+
+                if (useInches) {
+                    document.getElementById("projectWidth").value = (internalValues.width * CM_TO_INCH).toFixed(2);
+                    document.getElementById("projectLength").value = (internalValues.length * CM_TO_INCH).toFixed(2);
+                    document.getElementById("projectHeight").value = (internalValues.height * CM_TO_INCH).toFixed(2);
+                    document.getElementById("materialThick").value = (internalValues.material * CM_TO_INCH).toFixed(2);
+                } else {
+                    document.getElementById("projectWidth").value = internalValues.width.toFixed(2);
+                    document.getElementById("projectLength").value = internalValues.length.toFixed(2);
+                    document.getElementById("projectHeight").value = (internalValues.height * 10).toFixed(2);
+                    document.getElementById("materialThick").value = (internalValues.material * 10).toFixed(1);
+                }
+                document.getElementById("outerSizing").checked = generic.outer_sizing || false;
+
+                if (parts.Generic.outer_sizing === undefined) {
+                    parts.Generic.outer_sizing = false;
+                }
+
+                // Load part name
+                const updatedPartKeys = Object.keys(parts).filter(k => k !== "Generic");
+                if (updatedPartKeys.length > 0) {
+                    const firstPartKey = updatedPartKeys[0];
+                    const partName = firstPartKey.split("_")[0];
+                    selectedPart = partName;
+                    document.getElementById("projectName").value = partName;
+                }
+
+                // Load active sides
+                const loadedSides = new Set();
+                Object.keys(parts).forEach(key => {
+                    if (key !== "Generic") {
+                        const side = key.split("_")[1];
+                        loadedSides.add(side);
+                    }
+                });
+                
+                ["Front", "Back", "Top", "Bottom", "Left", "Right"].forEach(side => {
+                    const checkbox = document.getElementById(`sideCheck${side}`);
+                    checkbox.checked = loadedSides.has(side);
+                });
+                
+                // Update UI
+                updateSideSelector();
+                
+                // Select first active side
+                const activeSides = getActiveSides();
+                if (activeSides.length > 0) {
+                    selectedSide = activeSides[0];
+                    document.getElementById("sideSelector").value = selectedSide;
+                }
+                
+                // Update canvas and 3D view
+                drawCanvas();
+                draw3D();
+                updateCommandOutput();
+                
+                alert(`✅ Project "${selectedPart}" loaded successfully!`);
+                if (DEBUG_MODE) {
+                    console.log("Loaded parts:", parts);
+                }
+            } catch (error) {
+                alert("❌ Error loading JSON file: " + error.message);
+                console.error("Load error:", error);
+            }
+        };
+        
+        reader.readAsText(file);
+    });
+    
+    input.click();
+});
+
+
+document.getElementById("projectWidth").addEventListener("input", (e) => {
+    saveState();
+    const value = parseFloat(e.target.value) || 0;
+    internalValues.width = useInches ? value * INCH_TO_CM : value;
+
+    if(!parts.Generic) parts.Generic = {};
+    parts.Generic.width = internalValues.width;
+
+    updateCommandOutput();
+    drawCanvas();
+    draw3D();
+    saveDimensionState();
+});
+
+document.getElementById("projectLength").addEventListener("input", (e) => {
+    saveState();
+    const value = parseFloat(e.target.value) || 0;
+    internalValues.length = useInches ? value * INCH_TO_CM : value;
+
+    if(!parts.Generic) parts.Generic = {};
+    parts.Generic.length = internalValues.length;
+
+    updateCommandOutput();
+    drawCanvas();
+    draw3D();
+    saveDimensionState();
+});
+
+document.getElementById("projectHeight").addEventListener("input", (e) => {
+    saveState();
+    const value = parseFloat(e.target.value) || 0;
+    internalValues.height = useInches ? value * INCH_TO_CM : value / 10; // mm→cm
+    if(!parts.Generic) parts.Generic = {};
+    parts.Generic.height = internalValues.height * 10; // cm→mm
+    updateCommandOutput();
+    drawCanvas();
+    draw3D();
+    saveDimensionState();
+});
+
+document.getElementById("materialThick").addEventListener("input", (e) => {
+    saveState();
+    const value = parseFloat(e.target.value) || 0;
+    internalValues.material = useInches ? value * INCH_TO_CM : value / 10; // mm→cm
+    if(!parts.Generic) parts.Generic = {};
+    parts.Generic.material = internalValues.material * 10; // cm→mm
+    updateCommandOutput();
+    drawCanvas();
+    draw3D();
+    saveDimensionState();
+});
+
+
+svg.addEventListener("mousedown", (e) => {
+    if (selectedElement && e.button === 0) {
+        saveState();
+    }
+});
+
+let dimensionChangeTimeout = null;
+
+function saveDimensionState() {
+    clearTimeout(dimensionChangeTimeout);
+    dimensionChangeTimeout = setTimeout(() => {
+        saveState();
+    }, 750);
+}
+
+
+document.getElementById("appVersion").textContent = APP_VERSION;
+initInternalValues();
+initDefaultPart();
+updateSideSelector();
+updateCommandOutput();
+</script>
+
+</body>
+</html>
