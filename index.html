@@ -473,8 +473,10 @@ limitations under the License.
 
     <label for="compRot">Rotation</label>
     <input id="compRot" type="number" min="0" value="0" title="Rotation in degrees (Shortcut: R)">
-    <button id="applyChangesBtn" title="Shortcut: Enter">Apply</button>
-    <button id="duplicateCompBtn" title="Duplicate selected component (Shortcut: Ctrl+D)" style="background: #4CAF50; color: white;">Duplicate</button>
+    <div style="display: flex; gap: 5px; margin: 3px 0;">
+      <button id="applyChangesBtn" title="Shortcut: Enter" style="flex: 1; margin: 0;">Apply</button>
+      <button id="duplicateCompBtn" title="Duplicate selected component (Shortcut: Ctrl+D)" style="flex: 1; margin: 0; background: #4CAF50; color: white;">Duplicate</button>
+    </div>
     <button id="deleteCompBtn" title="Shortcut: Delete">Delete</button>
   </div>
   <h3>Command to Execute</h3>
@@ -1955,6 +1957,8 @@ function drawCanvas(){
         
         const maxGridX = Math.ceil(canvasW / pxPerCm / gridSizeX);
         const maxGridY = Math.ceil(canvasH / pxPerCm / gridSizeY);
+        const gridColor = isDarkTheme ? '#444' : '#ddd';
+        const gridBoldColor = isDarkTheme ? '#666' : '#bbb';
         const labelColor = isDarkTheme ? '#aaa' : '#666';
 
         // Vertical lines
@@ -1967,7 +1971,7 @@ function drawCanvas(){
             line.setAttribute("y1", 0);
             line.setAttribute("x2", xPos);
             line.setAttribute("y2", canvasH);
-            line.setAttribute("stroke", "#ddd");
+            line.setAttribute("stroke", i % 5 === 0 ? gridBoldColor : gridColor);
             // Every 5 grids, thicker line
             line.setAttribute("stroke-width", i % 5 === 0 ? "2" : "1");
             gridGroup.appendChild(line);
@@ -1983,7 +1987,7 @@ function drawCanvas(){
             line.setAttribute("y1", yPos);
             line.setAttribute("x2", canvasW);
             line.setAttribute("y2", yPos);
-            line.setAttribute("stroke", "#ddd");
+            line.setAttribute("stroke", i % 5 === 0 ? gridBoldColor : gridColor);
             line.setAttribute("stroke-width", i % 5 === 0 ? "2" : "1");
             gridGroup.appendChild(line);
         }
@@ -2023,6 +2027,7 @@ function drawCanvas(){
         }
     }
 
+    const visibleStrokeColor = isDarkTheme ? '#888888' : '#999999';
     const sideKey = getCurrentSideKey();
     const comps = parts[sideKey] || {};
 
@@ -2030,7 +2035,7 @@ function drawCanvas(){
         const centerX = c.location_x * pxPerCm;
         const centerY = c.location_y * pxPerCm;
         const rotation = c.rotation || 0;
-        
+
         let visibleShape;
         const useVisibleDiameter = c.visible_diameter && c.visible_diameter > 0;
         
@@ -2040,7 +2045,7 @@ function drawCanvas(){
             visibleShape.setAttribute("cy", centerY);
             visibleShape.setAttribute("r", (c.visible_diameter/2)*pxPerCm);
             visibleShape.setAttribute("fill","none");
-            visibleShape.setAttribute("stroke","#999");
+            visibleShape.setAttribute("stroke", visibleStrokeColor);
             visibleShape.setAttribute("stroke-width","2");
             visibleShape.setAttribute("stroke-dasharray","5,5");
             visibleShape.dataset.compId = compId;
@@ -2056,7 +2061,7 @@ function drawCanvas(){
             visibleShape.setAttribute("width", vw);
             visibleShape.setAttribute("height", vh);
             visibleShape.setAttribute("fill","none");
-            visibleShape.setAttribute("stroke","#999");
+            visibleShape.setAttribute("stroke", visibleStrokeColor);
             visibleShape.setAttribute("stroke-width","2");
             visibleShape.setAttribute("stroke-dasharray","5,5");
             visibleShape.setAttribute("rx", c.rx || 0);
