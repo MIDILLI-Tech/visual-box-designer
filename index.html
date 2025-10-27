@@ -474,6 +474,7 @@ limitations under the License.
     <label for="compRot">Rotation</label>
     <input id="compRot" type="number" min="0" value="0" title="Rotation in degrees (Shortcut: R)">
     <button id="applyChangesBtn" title="Shortcut: Enter">Apply</button>
+    <button id="duplicateCompBtn" title="Duplicate selected component (Shortcut: Ctrl+D)" style="background: #4CAF50; color: white;">Duplicate</button>
     <button id="deleteCompBtn" title="Shortcut: Delete">Delete</button>
   </div>
   <h3>Command to Execute</h3>
@@ -668,12 +669,15 @@ limitations under the License.
     <div class="help-section">
         <h3>⌨️ Keyboard Shortcuts</h3>
         <ul>
+            <li><kbd>Ctrl + O</kbd> - Open existing JSON file</li>
+            <li><kbd>Ctrl + S</kbd> - Save current JSON to computer</li>
             <li><kbd>Ctrl + Z</kbd> - Undo last action</li>
             <li><kbd>Ctrl + Shift + Z</kbd> or <kbd>Ctrl + Y</kbd> - Redo last undone action</li>
             <li><kbd>Shift + R</kbd> - Add rectangle component</li>
             <li><kbd>Shift + C</kbd> - Add circle/rounded component</li>
             <li><kbd>R</kbd> - Rotate selected component by 45° (when component is selected)</li>
             <li><kbd>↑ ↓ ← →</kbd> - Move selected component (when component is selected)</li>
+            <li><kbd>Ctrl + D</kbd> - Duplicate selected component (when component is selected)</li>
             <li><kbd>Delete</kbd> - Delete selected component (when component is selected)</li>
             <li><kbd>Enter</kbd> - Update Sides (when editing component properties)</li>
         </ul>
@@ -714,7 +718,7 @@ limitations under the License.
     <div class="help-section">
       <h3>🆘 Still Need Help?</h3>
       <p><a href="https://midilli.tech/help-and-support/" target="_blank">Contact Us</a></p>
-      <p>Version: <span id="appVersion"></span> | <a href="https://midilli.tech" target="_blank">MIDILLI Tech</a></p>
+      <p>Version: <span id="appVersion"></span> | <a href="https://midilli.tech" target="_blank">MIDILLI Tech</a> | Check for latest version <a href="https://midilli.tech/visual-box-designer/">here</a>.</p>
     </div>
   </div>
 </div>
@@ -732,7 +736,7 @@ limitations under the License.
 import * as THREE from "three";
 import { OrbitControls } from "orbitcontrols";
 
-const APP_VERSION = "1.0.0 (25.10.2025)";
+const APP_VERSION = "1.0.1 (27.10.2025)";
 const DEBUG_MODE = false;
 
 const svg = document.getElementById("svgCanvas");
@@ -1449,7 +1453,7 @@ resizeHandle.addEventListener("mousedown", (e) => {
     e.preventDefault();
 });
 
-// SHORTCUTS START
+// KEYBOARD SHORTCUTS START
 
 document.querySelectorAll('#componentFields input').forEach(input => {
     input.addEventListener('keydown', (e) => {
@@ -1475,7 +1479,13 @@ document.addEventListener('keydown', (e) => {
         undo();
         return;
     }
-    
+    else if (e.ctrlKey && e.key === 'd' && selectedElement) {
+        e.preventDefault();
+        document.getElementById('duplicateCompBtn').click();
+        if (DEBUG_MODE) {
+        console.log('⌨️ Ctrl+D: Component duplicated');
+        }
+    }
     // Ctrl+Shift+Z or Ctrl+Y: Redo
     else if ((e.ctrlKey && e.shiftKey && e.key === 'Z') || (e.ctrlKey && e.key === 'y')) {
         e.preventDefault();
@@ -3165,6 +3175,64 @@ document.getElementById("helpModal").addEventListener("click", (e) => {
     if(e.target.id === "helpModal") {
         document.getElementById("helpModal").classList.remove("show");
     }
+});
+
+document.getElementById("duplicateCompBtn").addEventListener("click", () => {
+  if (!selectedElement) return;
+  
+  saveState();
+  
+  const originalComp = selectedElement.comp;
+  const sideKey = getCurrentSideKey();
+  
+  // Deep clone component
+  const duplicatedComp = JSON.parse(JSON.stringify(originalComp));
+  
+  // Offset position slightly (1cm right, 1cm down)
+  duplicatedComp.location_x += 1;
+  duplicatedComp.location_y += 1;
+  
+  // Generate new ID
+  const newCompId = generateRandomId();
+  parts[sideKey][newCompId] = duplicatedComp;
+  
+  // Auto-select duplicated component
+  selectedElement = {
+    shape: null, // Will be set by drawCanvas
+    comp: duplicatedComp,
+    compId: newCompId
+  };
+  
+  // Update inputs with new component values
+  document.getElementById("compName").value = duplicatedComp.call_name || "";
+  document.getElementById("compFontSize").value = duplicatedComp.silkscreen_font_size || 12;
+  document.getElementById("compX").value = toDisplayUnit(duplicatedComp.location_x);
+  document.getElementById("compY").value = toDisplayUnit(duplicatedComp.location_y);
+  document.getElementById("compRot").value = duplicatedComp.rotation || 0;
+  
+  document.getElementById("compVD").value = duplicatedComp.visible_diameter ? toDisplayUnit(duplicatedComp.visible_diameter) : "";
+  document.getElementById("compVW").value = duplicatedComp.visible_width ? toDisplayUnit(duplicatedComp.visible_width) : "";
+  document.getElementById("compVL").value = duplicatedComp.visible_length ? toDisplayUnit(duplicatedComp.visible_length) : "";
+  
+  const isCircleDrill = duplicatedComp.drill_diameter !== undefined;
+  
+  if (isCircleDrill) {
+    document.getElementById("drillCircle").style.display = "block";
+    document.getElementById("drillRect").style.display = "none";
+    document.getElementById("compDD").value = duplicatedComp.drill_diameter ? toDisplayUnit(duplicatedComp.drill_diameter) : "";
+  } else {
+    document.getElementById("drillCircle").style.display = "none";
+    document.getElementById("drillRect").style.display = "block";
+    document.getElementById("compDW").value = duplicatedComp.drill_width ? toDisplayUnit(duplicatedComp.drill_width) : "";
+    document.getElementById("compDL").value = duplicatedComp.drill_length ? toDisplayUnit(duplicatedComp.drill_length) : "";
+  }
+  
+  drawCanvas();
+  draw3D();
+  
+  if (DEBUG_MODE) {
+    console.log(`Component duplicated: ${newCompId}`);
+  }
 });
 
 document.getElementById("loadJSONBtn").addEventListener("click", () => {
