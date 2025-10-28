@@ -1,7 +1,7 @@
 # MIDILLI Visual Box Designer
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://github.com/MIDILLI-Tech/visual-box-designer)
+[![Version](https://img.shields.io/badge/version-1.0.2-green.svg)](https://github.com/MIDILLI-Tech/visual-box-designer)
 [![Website](https://img.shields.io/badge/website-midilli.tech-orange.svg)](https://midilli.tech)
 
 A **free, open-source, web-based 3D box designer** for laser engravers, CNC routers, and 3D printers. Design custom boxes, cabinets, and furniture panels with precise component placement (drill holes, cutouts, labels) in an intuitive 2D/3D interface. Export your designs as JSON files to be used as input for free MIDILLI tools and to create production ready files.
