@@ -6,7 +6,11 @@
 
 A **free, open-source, web-based 3D box designer** for laser engravers, CNC routers, and 3D printers. Design custom boxes, cabinets, and furniture panels with precise component placement (drill holes, cutouts, labels) in an intuitive 2D/3D interface. Export your designs as JSON files to be used as input for free MIDILLI tools and to create production ready files.
 
-![MIDILLI Visual Box Designer Screenshot](screenshot_v100.png)
+![MIDILLI Visual Box Designer Screenshot](screenshot_v102.png)
+
+[Start Using Online](https://midilli.tech/visual-box-designer/)
+
+[Read Online Manual](https://midilli.tech/help-and-support/manuals/manuals-free-tools/midilli-visual-box-designer/)
 
 ---
 
@@ -283,8 +287,7 @@ This project is licensed under the **Apache License 2.0** – see [LICENSE](LICE
 
 ### Documentation
 
-Coming soon
-<!-- - 📖 [Full User Manual](https://midilli.tech/help-and-support/manuals/) -->
+- 📖 [Read Online Manual](https://midilli.tech/help-and-support/manuals/manuals-free-tools/midilli-visual-box-designer/)
 <!-- - 🎥 [Video Tutorials](https://midilli.tech/help-and-support/video-tutorials/) (coming soon) -->
 <!-- - 💬 [FAQ](https://midilli.tech/help-and-support/faq/) -->
 
@@ -304,7 +307,7 @@ Coming soon
 ## 🏆 Credits
 
 **Developed by:** [MIDILLI Tech](https://midilli.tech)  
-**Version:** 1.0.0 (October 25, 2025)  
+**Version:** 1.0.2 (October 28, 2025)  
 
 **Built with:**
 - [Three.js](https://threejs.org/) – 3D rendering library ([MIT License](https://github.com/mrdoob/three.js/blob/dev/LICENSE))
@@ -374,7 +377,7 @@ Design jigs and fixtures:
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Special thanks to:
 - [Three.js](https://threejs.org/) community for excellent documentation
@@ -387,4 +390,4 @@ Special thanks to:
 
 **Star ⭐ this repo if you find it useful!**
 
-[Website](https://midilli.tech) • [Documentation](https://midilli.tech/help-and-support/manuals/) • [Download Tools](https://midilli.tech/download/free-tools-and-utilities/) • [Report Issue](https://github.com/MIDILLI-Tech/visual-box-designer/issues)
+[Website](https://midilli.tech) • [Documentation](https://midilli.tech/help-and-support/manuals/) • [Download Compatible Tools](https://midilli.tech/download/free-tools-and-utilities/) • [Report Issue](https://github.com/MIDILLI-Tech/visual-box-designer/issues)
