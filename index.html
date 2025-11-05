@@ -936,9 +936,9 @@ function updateUIFromParts() {
     if (parts.Generic) {
         internalValues.width = parts.Generic.width || 10;
         internalValues.length = parts.Generic.length || 10;
-        internalValues.height = (parts.Generic.height || 30) / 10;
-        internalValues.material = (parts.Generic.material || 3) / 10;
-        
+        internalValues.height = (parts.Generic.box_height_3d || 30) / 10;
+        internalValues.material = (parts.Generic.material_thickness || 3) / 10;
+
         if (useInches) {
             document.getElementById("projectWidth").value = (internalValues.width * CM_TO_INCH).toFixed(2);
             document.getElementById("projectLength").value = (internalValues.length * CM_TO_INCH).toFixed(2);
@@ -1847,8 +1847,8 @@ document.getElementById("updatePartBtn").addEventListener("click",()=>{
         parts.Generic = {
             "width": internalValues.width,
             "length": internalValues.length,
-            "height": internalValues.height,
-            "material": internalValues.material * 10, // cm → mm
+            "box_height_3d": internalValues.height * 10, // cm → mm
+            "material_thickness": internalValues.material * 10, // cm → mm
             "outer_sizing": document.getElementById("outerSizing").checked
         };
         const allSides = ["Front", "Back", "Top", "Bottom", "Left", "Right"];
@@ -3283,8 +3283,8 @@ document.getElementById("loadJSONBtn").addEventListener("click", () => {
                 const generic = parts.Generic;
                 internalValues.width = generic.width || 10;
                 internalValues.length = generic.length || 10;
-                internalValues.height = (generic.height || 30) / 10; // mm → cm
-                internalValues.material = (generic.material || 3) / 10; // mm → cm
+                internalValues.height = (generic.box_height_3d || 30) / 10; // mm → cm
+                internalValues.material = (generic.material_thickness || 3) / 10; // mm → cm
 
                 if (useInches) {
                     document.getElementById("projectWidth").value = (internalValues.width * CM_TO_INCH).toFixed(2);
@@ -3391,7 +3391,7 @@ document.getElementById("projectHeight").addEventListener("input", (e) => {
     const value = parseFloat(e.target.value) || 0;
     internalValues.height = useInches ? value * INCH_TO_CM : value / 10; // mm→cm
     if(!parts.Generic) parts.Generic = {};
-    parts.Generic.height = internalValues.height * 10; // cm→mm
+    parts.Generic.box_height_3d = internalValues.height * 10; // cm→mm
     updateCommandOutput();
     drawCanvas();
     draw3D();
@@ -3403,7 +3403,7 @@ document.getElementById("materialThick").addEventListener("input", (e) => {
     const value = parseFloat(e.target.value) || 0;
     internalValues.material = useInches ? value * INCH_TO_CM : value / 10; // mm→cm
     if(!parts.Generic) parts.Generic = {};
-    parts.Generic.material = internalValues.material * 10; // cm→mm
+    parts.Generic.material_thickness = internalValues.material * 10; // cm→mm
     updateCommandOutput();
     drawCanvas();
     draw3D();
