@@ -742,7 +742,7 @@ limitations under the License.
 import * as THREE from "three";
 import { OrbitControls } from "orbitcontrols";
 
-const APP_VERSION = "1.0.4 (07.11.2025)";
+const APP_VERSION = "1.0.5 (10.11.2025)";
 const DEBUG_MODE = false;
 
 const svg = document.getElementById("svgCanvas");
@@ -2200,7 +2200,7 @@ function createHoverTexture(text) {
 function getBoxCenter() {
     const partWidth = parseFloat(document.getElementById("projectWidth").value) || 10;
     const partLength = parseFloat(document.getElementById("projectLength").value) || 10;
-    const partHeight = parseFloat(document.getElementById("projectHeight").value) || 3;
+    const partHeight = parseFloat(document.getElementById("projectHeight").value) / 10 || 3;
     const matThick = parseFloat(document.getElementById("materialThick").value) / 10;
     const outerSizing = document.getElementById("outerSizing").checked;
     
@@ -3019,7 +3019,7 @@ document.getElementById("addRectBtn").addEventListener("click",()=>{
 
     const partWidth = parseFloat(document.getElementById("projectWidth").value);
     const partLength = parseFloat(document.getElementById("projectLength").value);
-    const partHeight = parseFloat(document.getElementById("projectHeight").value);
+    const partHeight = parseFloat(document.getElementById("projectHeight").value) / 10;
     const cSideKey = getCurrentSideKey();
     let startX, startY;
     
@@ -3077,7 +3077,7 @@ document.getElementById("addRoundedBtn").addEventListener("click",()=>{
 
     const partWidth = parseFloat(document.getElementById("projectWidth").value);
     const partLength = parseFloat(document.getElementById("projectLength").value);
-    const partHeight = parseFloat(document.getElementById("projectHeight").value);
+    const partHeight = parseFloat(document.getElementById("projectHeight").value) / 10;
     const cSideKey = getCurrentSideKey();
 
     let startX, startY;
