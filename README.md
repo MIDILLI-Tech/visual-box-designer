@@ -10,7 +10,7 @@ A **free, open-source, web-based 3D box designer** for laser engravers, CNC rout
 
 [Start Using Online](https://midilli.tech/visual-box-designer/)
 
-[Read Online Manual](https://midilli.tech/help-and-support/manuals/manuals-free-tools/midilli-visual-box-designer/)
+[Read Online Manual](https://docs.midilli.tech/books/midilli-visual-box-designer)
 
 ---
 
@@ -202,7 +202,7 @@ Each side has its own 2D coordinate system with origin (0,0) at **top-left corne
 - **Top/Bottom:** X = Width, Y = Length
 - **Left/Right:** X = Height, Y = Length
 
-**Learn more:** [Understanding 2D Coordinate Systems in MIDILLI Tools](https://midilli.tech/help-and-support/manuals/manuals-free-tools/understanding-2d-coordinate-systems-in-midilli-tools/)
+**Learn more:** [Understanding 2D Coordinate Systems in MIDILLI Tools](https://docs.midilli.tech/books/reference-documents/page/understanding-2d-coordinate-systems-in-midilli-tools)
 
 ### Data Storage
 - All internal measurements stored in **centimeters**
@@ -287,27 +287,26 @@ This project is licensed under the **Apache License 2.0** – see [LICENSE](LICE
 
 ### Documentation
 
-- 📖 [Read Online Manual](https://midilli.tech/help-and-support/manuals/manuals-free-tools/midilli-visual-box-designer/)
+- 📖 [Read Online Manual](https://docs.midilli.tech/books/midilli-visual-box-designer)
 <!-- - 🎥 [Video Tutorials](https://midilli.tech/help-and-support/video-tutorials/) (coming soon) -->
 <!-- - 💬 [FAQ](https://midilli.tech/help-and-support/faq/) -->
 
 ### Community
 - 💻 [MIDILLI Tech Website](https://midilli.tech)
-- 📧 [Contact Support](https://midilli.tech/help-and-support/)
+- 📧 [Contact Support](https://docs.midilli.tech/)
 - 🐛 [Report Bug](https://github.com/MIDILLI-Tech/visual-box-designer/issues)
 
 ### Related Tools
 - [MIDILLI Free Tools Download Page](https://midilli.tech/download/free-tools-and-utilities/)
-- [MIDILLI SVG Generator Documentation](https://midilli.tech/product/midilli-svg-generator-for-laser-engraving-machines/)
-- [MIDILLI G-Code Generator Documentation](https://midilli.tech/product/midilli-g-code-generator-for-cnc-routers/)
-- [MIDILLI STL Generator Documentation](https://midilli.tech/product/midilli-stl-generator-for-3d-printers/)
+- [MIDILLI SVG Generator Documentation](https://docs.midilli.tech/books/midilli-svg-generator)
+- [MIDILLI G-Code Generator Documentation](https://docs.midilli.tech/books/midilli-g-code-generator)
+- [MIDILLI STL Generator Documentation](https://docs.midilli.tech/books/midilli-stl-generator-for-3d-printers)
 
 ---
 
 ## 🏆 Credits
 
-**Developed by:** [MIDILLI Tech](https://midilli.tech)  
-**Version:** ![Version](https://img.shields.io/badge/version-1.0.7-green.svg) (November 07, 2025)  
+**Developed by:** [MIDILLI Tech](https://midilli.tech) 
 
 **Built with:**
 - [Three.js](https://threejs.org/) – 3D rendering library ([MIT License](https://github.com/mrdoob/three.js/blob/dev/LICENSE))
