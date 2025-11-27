@@ -1751,7 +1751,9 @@ function createEmptyPart(name){
     const obj = {
         "Generic": {
             "width": parseFloat(document.getElementById("projectWidth").value) || 10,
-            "length": parseFloat(document.getElementById("projectLength").value) || 10
+            "length": parseFloat(document.getElementById("projectLength").value) || 10,
+            "box_height_3d": parseFloat(document.getElementById("projectHeight").value) || 30,
+            "material_thickness": parseFloat(document.getElementById("materialThick").value) || 0.3
         }
     };
     activeSides.forEach(s => {
