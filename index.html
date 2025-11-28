@@ -683,6 +683,7 @@ limitations under the License.
             <li><kbd>↑ ↓ ← →</kbd> - Move selected component (when component is selected)</li>
             <li><kbd>Ctrl + D</kbd> - Duplicate selected component (when component is selected)</li>
             <li><kbd>Delete</kbd> - Delete selected component (when component is selected)</li>
+            <li><kbd>Escape</kbd> - Deselect component</li>
             <li><kbd>Enter</kbd> - Update Sides (when editing component properties)</li>
         </ul>
         </div>
@@ -1577,6 +1578,12 @@ document.addEventListener('keydown', (e) => {
             console.log('⌨️ Delete: Component removed');
         }
     }
+    // Escape key: Deselect component
+    else if (e.key === "Escape") {
+        selectedElement = null;
+        document.getElementById("componentFields").style.display = "none";
+        document.getElementById("noSelection").style.display = "block";
+    }
 });
 
 // END SHORTCUTS
@@ -1631,6 +1638,15 @@ svgContainer.addEventListener("mousedown", (e) => {
 svg.addEventListener("mousedown", (e) => {
     if (selectedElement && e.button === 0) {
         saveState();
+    }
+});
+
+svg.addEventListener("mousedown", (e) => {
+    // Deselect component if clicking on empty SVG area
+    if (e.target === svg) {
+        selectedElement = null;
+        document.getElementById("componentFields").style.display = "none";
+        document.getElementById("noSelection").style.display = "block";
     }
 });
 
