@@ -743,7 +743,7 @@ limitations under the License.
 import * as THREE from "three";
 import { OrbitControls } from "orbitcontrols";
 
-const APP_VERSION = "1.0.6 (28.11.2025)";
+const APP_VERSION = "1.0.7 (28.11.2025)";
 const DEBUG_MODE = false;
 
 const svg = document.getElementById("svgCanvas");
@@ -2826,7 +2826,7 @@ function selectShape(e,shape,comp, compId){
     const rect = svg.getBoundingClientRect();
     const mouseX = (e.clientX - rect.left) / pxPerCm;
     const mouseY = (e.clientY - rect.top) / pxPerCm;
-    
+
     dragOffset.x = mouseX - comp.location_x;
     dragOffset.y = mouseY - comp.location_y;
     
@@ -2906,8 +2906,11 @@ svg.addEventListener("mousemove", (e)=>{
     if(!isDragging || !selectedElement) return;
     
     const rect = svg.getBoundingClientRect();
-    let newX = (e.clientX - rect.left) / pxPerCm - dragOffset.x;
-    let newY = (e.clientY - rect.top) / pxPerCm - dragOffset.y;
+    // Calculate scaled mouse position
+    let scaledX = (e.clientX - rect.left - svgPanZoom.offset.x) / svgPanZoom.scale;
+    let scaledY = (e.clientY - rect.top - svgPanZoom.offset.y) / svgPanZoom.scale;
+    let newX = scaledX / pxPerCm - dragOffset.x;
+    let newY = scaledY / pxPerCm - dragOffset.y;
     
     if(gridSnap){
         newX = Math.round(newX / gridSizeX) * gridSizeX;
