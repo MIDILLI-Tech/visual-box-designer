@@ -743,7 +743,7 @@ limitations under the License.
 import * as THREE from "three";
 import { OrbitControls } from "orbitcontrols";
 
-const APP_VERSION = "1.0.7 (28.11.2025)";
+const APP_VERSION = "1.0.8 (14.11.2025)";
 const DEBUG_MODE = false;
 
 const svg = document.getElementById("svgCanvas");
@@ -1471,6 +1471,12 @@ document.querySelectorAll('#componentFields input').forEach(input => {
     });
 });
 
+function isEditableTarget(el) {
+    if (!el) return false;
+    const tag = el.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+}
+
 document.addEventListener('keydown', (e) => {
 
     if (e.ctrlKey && e.key === 'o') {
@@ -1557,8 +1563,8 @@ document.addEventListener('keydown', (e) => {
         }
     }
     
-    // R (without Shift): Rotate selected component by 45°
-    else if (!e.shiftKey && e.key === 'r' && selectedElement) {
+    // R (without Shift): Rotate selected component by 45° (but not while typing in inputs)
+    else if (!e.shiftKey && e.key === 'r' && selectedElement && !isEditableTarget(e.target)) {
         e.preventDefault();
         const c = selectedElement.comp;
         c.rotation = ((c.rotation || 0) + 45) % 360;
