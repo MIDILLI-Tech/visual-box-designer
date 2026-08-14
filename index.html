@@ -346,6 +346,31 @@ limitations under the License.
   </div>
   <label>Project Name:</label>
   <input id="projectName" placeholder="MyProject">
+  <button id="showJSONBtn" style="margin-top: 6px;">📄 Show JSON</button>
+
+  <div style="margin: 10px 0; padding: 10px; background: #e8e8e8; border-radius: 4px;">
+    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Enabled Sides:</label>
+    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
+        <input type="checkbox" id="sideCheckFront" checked style="width: auto; margin: 0;"> Front
+    </label>
+    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
+        <input type="checkbox" id="sideCheckBack" checked style="width: auto; margin: 0;"> Back
+    </label>
+    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
+        <input type="checkbox" id="sideCheckTop" checked style="width: auto; margin: 0;"> Top
+    </label>
+    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
+        <input type="checkbox" id="sideCheckBottom" checked style="width: auto; margin: 0;"> Bottom
+    </label>
+    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
+        <input type="checkbox" id="sideCheckLeft" checked style="width: auto; margin: 0;"> Left
+    </label>
+    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
+        <input type="checkbox" id="sideCheckRight" checked style="width: auto; margin: 0;"> Right
+    </label>
+    <button id="updatePartBtn">🔄 Update Sides</button>
+  </div>
+
   <div style="display: flex; gap: 5px; margin: 3px 0;">
     <div style="flex: 1;">
       <label for="projectWidth" style="margin: 0;">Width (cm):</label>
@@ -378,26 +403,32 @@ limitations under the License.
   </div>
 
   <div style="margin: 10px 0; padding: 10px; background: #e8e8e8; border-radius: 4px;">
-    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Enabled Sides:</label>
-    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
-        <input type="checkbox" id="sideCheckFront" checked style="width: auto; margin: 0;"> Front
+    <label style="font-weight: bold; display: block; margin-bottom: 5px;">
+      <input type="checkbox" id="fingerJoint" style="width: auto; vertical-align: middle;">
+      Finger Joints
     </label>
-    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
-        <input type="checkbox" id="sideCheckBack" checked style="width: auto; margin: 0;"> Back
-    </label>
-    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
-        <input type="checkbox" id="sideCheckTop" checked style="width: auto; margin: 0;"> Top
-    </label>
-    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
-        <input type="checkbox" id="sideCheckBottom" checked style="width: auto; margin: 0;"> Bottom
-    </label>
-    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
-        <input type="checkbox" id="sideCheckLeft" checked style="width: auto; margin: 0;"> Left
-    </label>
-    <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
-        <input type="checkbox" id="sideCheckRight" checked style="width: auto; margin: 0;"> Right
-    </label>
-    <button id="updatePartBtn">🔄 Update Sides</button>
+    <small style="color: #666; display: block; margin-top: 5px;">
+      Box joints at the 4 vertical corners so walls interlock without glue.
+    </small>
+    <div style="display: flex; gap: 5px; margin: 6px 0 0;">
+      <div style="flex: 1;">
+        <label for="fingerSize" style="margin: 0;">Finger Size (mm):</label>
+        <input id="fingerSize" type="number" min="0" value="0" step="0.5">
+        <small style="color: #666;">0 = material thickness</small>
+      </div>
+      <div style="flex: 1;">
+        <label for="fingerCount" style="margin: 0;">Finger Count:</label>
+        <input id="fingerCount" type="number" min="0" value="0" step="1">
+        <small style="color: #666;">0 = automatic</small>
+      </div>
+    </div>
+    <div style="display: flex; gap: 5px; margin: 6px 0 0;">
+      <div style="flex: 1;">
+        <label for="fingerClearance" style="margin: 0;">Finger Clearance (mm):</label>
+        <input id="fingerClearance" type="number" min="0" value="0" step="0.05">
+        <small style="color: #666;">Extra width for finger slots</small>
+      </div>
+    </div>
   </div>
 
   <label style="font-weight: bold; margin-top: 10px;">Current Side:</label>
@@ -414,7 +445,6 @@ limitations under the License.
     <button id="addRectBtn" title="Add Rectangle Component (Shortcut: Shift + R)" style="flex: 1; margin: 0;">+ ⬜</button>
     <button id="addRoundedBtn" title="Add Rounded Component (Shortcut: Shift + C)" style="flex: 1; margin: 0;">+ ⚪</button>
   </div>
-  <button id="showJSONBtn">📄 Show JSON</button>
 
 </div>
 
@@ -743,7 +773,7 @@ limitations under the License.
 import * as THREE from "three";
 import { OrbitControls } from "orbitcontrols";
 
-const APP_VERSION = "1.0.8 (14.11.2025)";
+const APP_VERSION = "1.0.9 (14.08.2026)";
 const DEBUG_MODE = false;
 
 const svg = document.getElementById("svgCanvas");
@@ -1770,12 +1800,18 @@ animate();
 // --- Parts logic ---
 function createEmptyPart(name){
     const activeSides = getActiveSides();
+    const fingerJson = readFingerSettingsFromUI();
     const obj = {
         "Generic": {
             "width": parseFloat(document.getElementById("projectWidth").value) || 10,
             "length": parseFloat(document.getElementById("projectLength").value) || 10,
             "box_height_3d": parseFloat(document.getElementById("projectHeight").value) || 30,
-            "material_thickness": parseFloat(document.getElementById("materialThick").value) || 0.3
+            "material_thickness": parseFloat(document.getElementById("materialThick").value) || 0.3,
+            "outer_sizing": document.getElementById("outerSizing").checked,
+            "finger_joint": fingerJson.finger_joint,
+            "finger_size": fingerJson.finger_size,
+            "finger_count": fingerJson.finger_count,
+            "finger_clearance": fingerJson.finger_clearance
         }
     };
     activeSides.forEach(s => {
@@ -1868,12 +1904,17 @@ document.getElementById("updatePartBtn").addEventListener("click",()=>{
         selectedPart = newName;
     } else {
         // Update Generic with internal values (ALWAYS CM)
+        const fingerJson = readFingerSettingsFromUI();
         parts.Generic = {
             "width": internalValues.width,
             "length": internalValues.length,
             "box_height_3d": internalValues.height * 10, // cm → mm
             "material_thickness": internalValues.material * 10, // cm → mm
-            "outer_sizing": document.getElementById("outerSizing").checked
+            "outer_sizing": document.getElementById("outerSizing").checked,
+            "finger_joint": fingerJson.finger_joint,
+            "finger_size": fingerJson.finger_size,
+            "finger_count": fingerJson.finger_count,
+            "finger_clearance": fingerJson.finger_clearance
         };
         const allSides = ["Front", "Back", "Top", "Bottom", "Left", "Right"];
         allSides.forEach(side => {
@@ -1912,6 +1953,202 @@ function loadSidesForPart(partName){
 // --- Canvas ---
 let isDragging = false;
 let dragOffset = {x:0, y:0};
+
+// --- Finger joints ---
+// Port of compute_finger_pattern from the MIDILLI C++ tools (svggenerator.cpp).
+// Panel A (Front/Back) has tabs at m + 2i*f and slots at m + (2i+1)*f.
+// Panel B (Left/Right) has slots at m + 2i*f and tabs at m + (2i+1)*f.
+// Panel A slots receive no protruding tab, so they stay exactly finger_size wide;
+// panel B slots are widened by the fit clearance.
+// All positions/widths in mm. Returns {slots: [[start,width]...], tabs: [[start,width]...]}.
+function computeFingerPattern(edgeLengthMm, fingerSizeMm, clearanceMm, fingerCount, panelA) {
+    const slots = [];
+    const tabs = [];
+    if (edgeLengthMm <= 0 || fingerSizeMm <= 0) return { slots, tabs };
+
+    let n;
+    if (fingerCount > 0) {
+        n = fingerCount;
+    } else {
+        n = Math.round(edgeLengthMm / (2 * fingerSizeMm));
+    }
+    const maxN = Math.floor((edgeLengthMm + fingerSizeMm) / (2 * fingerSizeMm));
+    if (n > maxN) n = maxN;
+    if (n < 1) return { slots, tabs };
+
+    const slotWidth = fingerSizeMm + (panelA ? 0 : clearanceMm);
+    let margin = (edgeLengthMm - (2 * n - 1) * fingerSizeMm) / 2;
+    if (margin < 0) margin = 0;
+
+    for (let i = 0; i < n; i++) {
+        const start = margin + 2 * i * fingerSizeMm;
+        if (panelA) {
+            tabs.push([start, fingerSizeMm]);
+        } else {
+            slots.push([start, slotWidth]);
+        }
+    }
+    for (let i = 0; i < n - 1; i++) {
+        const start = margin + (2 * i + 1) * fingerSizeMm;
+        if (panelA) {
+            slots.push([start, slotWidth]);
+        } else {
+            tabs.push([start, fingerSizeMm]);
+        }
+    }
+    return { slots, tabs };
+}
+
+// Builds the closed SVG outline path of a panel whose edges carry a finger profile.
+// fingerOnVerticalEdges = true for Front/Back (fingers on left/right edges),
+// false for Left/Right (slots cut into the top/bottom edges).
+// widthCm/heightCm are the panel dimensions, thicknessCm the material thickness.
+// tabsMm/slotsMm hold feature [start, width] positions along the finger edge in mm.
+// Coordinates are in the 2D canvas space (cm * pxPerCm, y top-down).
+function buildFingerPath(widthCm, heightCm, thicknessCm, tabsMm, slotsMm, fingerOnVerticalEdges) {
+    const W = widthCm * pxPerCm;
+    const H = heightCm * pxPerCm;
+    const t = thicknessCm * pxPerCm;
+    const toPx = (mm) => mm / 10 * pxPerCm;
+
+    const features = [];
+    for (const [start, width] of tabsMm) features.push({ start: toPx(start), end: toPx(start + width), isTab: true });
+    for (const [start, width] of slotsMm) features.push({ start: toPx(start), end: toPx(start + width), isTab: false });
+    features.sort((a, b) => a.start - b.start);
+
+    let path = `M 0 0`;
+
+    if (fingerOnVerticalEdges) {
+        // Slots keep their original edge position; only real tabs protrude outward by material thickness.
+        for (const f of features) {
+            const dx = f.isTab ? -t : 0;
+            path += ` L 0 ${f.start.toFixed(2)} L ${dx.toFixed(2)} ${f.start.toFixed(2)} L ${dx.toFixed(2)} ${f.end.toFixed(2)} L 0 ${f.end.toFixed(2)}`;
+        }
+        path += ` L 0 ${H.toFixed(2)} L ${W.toFixed(2)} ${H.toFixed(2)}`;
+        for (let i = features.length - 1; i >= 0; i--) {
+            const f = features[i];
+            const dx = f.isTab ? t : 0;
+            path += ` L ${W.toFixed(2)} ${f.end.toFixed(2)} L ${(W + dx).toFixed(2)} ${f.end.toFixed(2)} L ${(W + dx).toFixed(2)} ${f.start.toFixed(2)} L ${W.toFixed(2)} ${f.start.toFixed(2)}`;
+        }
+        path += ` L ${W.toFixed(2)} 0 L 0 0`;
+    } else {
+        for (const f of features) {
+            path += ` L ${f.start.toFixed(2)} 0 L ${f.start.toFixed(2)} ${t.toFixed(2)} L ${f.end.toFixed(2)} ${t.toFixed(2)} L ${f.end.toFixed(2)} 0`;
+        }
+        path += ` L ${W.toFixed(2)} 0 L ${W.toFixed(2)} ${H.toFixed(2)}`;
+        for (let i = features.length - 1; i >= 0; i--) {
+            const f = features[i];
+            path += ` L ${f.end.toFixed(2)} ${H.toFixed(2)} L ${f.end.toFixed(2)} ${(H - t).toFixed(2)} L ${f.start.toFixed(2)} ${(H - t).toFixed(2)} L ${f.start.toFixed(2)} ${H.toFixed(2)}`;
+        }
+        path += ` L 0 ${H.toFixed(2)} L 0 0`;
+    }
+    path += ` Z`;
+    return path;
+}
+
+// Current finger joint settings from the UI (finger_size defaults to material thickness).
+function getFingerSettings() {
+    const matThick = internalValues.material; // cm
+    const fingerJoint = document.getElementById("fingerJoint").checked;
+    const fingerSizeMm = parseFloat(document.getElementById("fingerSize").value || "0");
+    const fingerCount = parseInt(document.getElementById("fingerCount").value || "0", 10);
+    const fingerClearanceMm = parseFloat(document.getElementById("fingerClearance").value || "0");
+    const fingerSize = fingerSizeMm > 0 ? fingerSizeMm : matThick * 10; // mm
+    return { fingerJoint, fingerSize, fingerCount, fingerClearance: fingerClearanceMm, fingerSizeMm };
+}
+
+// Finger joint values to store in parts.Generic (JSON export).
+function readFingerSettingsFromUI() {
+    return {
+        finger_joint: document.getElementById("fingerJoint").checked,
+        finger_size: parseFloat(document.getElementById("fingerSize").value || "0"),
+        finger_count: parseInt(document.getElementById("fingerCount").value || "0", 10),
+        finger_clearance: parseFloat(document.getElementById("fingerClearance").value || "0")
+    };
+}
+
+// Panel geometry (cm) for the given side, matching the C++ tools.
+function getPanelDims(side, partWidth, partLength, partHeight, matThick, outerSizing) {
+    const os = outerSizing ? 1 : 0;
+    const e = partHeight + 2 * matThick * (1 - os) - 2 * matThick * os; // height-edge length
+    switch (side) {
+        case "Front":
+        case "Back":
+            return { w: partWidth - 2 * matThick * os, h: e };
+        case "Top":
+        case "Bottom":
+            return { w: partWidth, h: partLength };
+        case "Left":
+        case "Right":
+            return { w: e, h: partLength + 2 * matThick * (1 - os) };
+    }
+}
+
+// Panel outline polygon points (cm, 2D canvas coords, y top-down) with the finger profile.
+function getPanelOutlineCm(dims, matThickCm, finger, isFrontBack) {
+    const W = dims.w, H = dims.h, t = matThickCm;
+    const edgeLenMm = (isFrontBack ? H : W) * 10;
+    const pattern = computeFingerPattern(edgeLenMm, finger.fingerSize, finger.fingerClearance, finger.fingerCount, isFrontBack);
+    const features = [];
+    for (const [s, w] of (isFrontBack ? pattern.tabs : [])) features.push({ start: s / 10, end: (s + w) / 10, isTab: true });
+    for (const [s, w] of pattern.slots) features.push({ start: s / 10, end: (s + w) / 10, isTab: false });
+    features.sort((a, b) => a.start - b.start);
+
+    const pts = [[0, 0]];
+    if (isFrontBack) {
+        // Slots stay on the original boundary; tabs are the only parts that extend outward by material thickness.
+        for (const f of features) {
+            const dx = f.isTab ? -t : 0;
+            pts.push([0, f.start], [dx, f.start], [dx, f.end], [0, f.end]);
+        }
+        pts.push([0, H], [W, H]);
+        for (let i = features.length - 1; i >= 0; i--) {
+            const f = features[i];
+            const dx = f.isTab ? t : 0;
+            pts.push([W, f.end], [W + dx, f.end], [W + dx, f.start], [W, f.start]);
+        }
+        pts.push([W, 0], [0, 0]);
+    } else {
+        for (const f of features) {
+            pts.push([f.start, 0], [f.start, t], [f.end, t], [f.end, 0]);
+        }
+        pts.push([W, 0], [W, H]);
+        for (let i = features.length - 1; i >= 0; i--) {
+            const f = features[i];
+            pts.push([f.end, H], [f.end, H - t], [f.start, H - t], [f.start, H]);
+        }
+        pts.push([0, H], [0, 0]);
+    }
+    return pts;
+}
+
+// Builds the 3D mesh for a finger-jointed wall panel from its 2D profile.
+function createFingerPanelMesh(side, dims, matThickCm, finger, material) {
+    const isFrontBack = side === "Front" || side === "Back";
+    const pts = getPanelOutlineCm(dims, matThickCm, finger, isFrontBack);
+    const shape = new THREE.Shape();
+    let lastGx = null, lastGy = null;
+    for (let i = 0; i < pts.length; i++) {
+        const [x2, y2] = pts[i];
+        // Map 2D top-down coords into a world-oriented local frame (y up).
+        // Front/Back: X = width, Y = height. Left/Right: X = length (depth), Y = height.
+        const gx = isFrontBack ? x2 : (side === "Right" ? y2 : -y2);
+        const gy = (isFrontBack ? dims.h : dims.w) - (isFrontBack ? y2 : x2);
+        // Skip consecutive duplicates (zero-length segments) for clean triangulation.
+        if (lastGx === gx && lastGy === gy) continue;
+        if (i === 0) {
+            shape.moveTo(gx, gy);
+        } else {
+            shape.lineTo(gx, gy);
+        }
+        lastGx = gx; lastGy = gy;
+    }
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: matThickCm, bevelEnabled: false });
+    if (!isFrontBack) {
+        geo.rotateY(side === "Right" ? -Math.PI / 2 : Math.PI / 2);
+    }
+    return new THREE.Mesh(geo, material);
+}
 
 function drawCanvas(){
     svg.innerHTML="";
@@ -2058,6 +2295,27 @@ function drawCanvas(){
     const visibleStrokeColor = isDarkTheme ? '#888888' : '#999999';
     const sideKey = getCurrentSideKey();
     const comps = parts[sideKey] || {};
+
+    // Panel outline (finger profile when enabled, plain rect otherwise)
+    const finger = getFingerSettings();
+    const dims = getPanelDims(selectedSide, partWidth, partLength, partHeight, matThick, outerSizing);
+    const outlineColor = isDarkTheme ? '#aaaaaa' : '#444444';
+    const outlineEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    let outlineD;
+    const isWallPanel = selectedSide === "Front" || selectedSide === "Back" || selectedSide === "Left" || selectedSide === "Right";
+    if (finger.fingerJoint && isWallPanel) {
+        const isFrontBack = selectedSide === "Front" || selectedSide === "Back";
+        const edgeLenMm = (isFrontBack ? dims.h : dims.w) * 10;
+        const pattern = computeFingerPattern(edgeLenMm, finger.fingerSize, finger.fingerClearance, finger.fingerCount, isFrontBack);
+        outlineD = buildFingerPath(dims.w, dims.h, matThick, isFrontBack ? pattern.tabs : [], pattern.slots, isFrontBack);
+    } else {
+        outlineD = `M 0 0 L ${(dims.w * pxPerCm).toFixed(2)} 0 L ${(dims.w * pxPerCm).toFixed(2)} ${(dims.h * pxPerCm).toFixed(2)} L 0 ${(dims.h * pxPerCm).toFixed(2)} Z`;
+    }
+    outlineEl.setAttribute("d", outlineD);
+    outlineEl.setAttribute("fill", "none");
+    outlineEl.setAttribute("stroke", outlineColor);
+    outlineEl.setAttribute("stroke-width", "2");
+    svg.appendChild(outlineEl);
 
         Object.entries(comps).forEach(([compId, c]) => {
         const centerX = c.location_x * pxPerCm;
@@ -2525,7 +2783,23 @@ function draw3D(){
         leftX = boxWidth + matThick/2;
     }
 
+    const finger3D = getFingerSettings();
     activeSides.forEach(side => {
+        if (finger3D.fingerJoint && (side === "Front" || side === "Back" || side === "Left" || side === "Right")) {
+            const dims = getPanelDims(side, partWidth, partLength, partHeight, matThick, outerSizing);
+            const fingerMesh = createFingerPanelMesh(side, dims, matThick, finger3D, panelMat);
+            let fx, fy, fz;
+            const dw = dims.w, dh = dims.h;
+            switch (side) {
+                case "Front": fx = boxWidth/2 - dw/2; fy = boxHeight/2 - dh/2; fz = frontZ - matThick/2; break;
+                case "Back":  fx = boxWidth/2 - dw/2; fy = boxHeight/2 - dh/2; fz = backZ - matThick/2; break;
+                case "Right": fx = rightX + matThick/2; fy = boxHeight/2 - dw/2; fz = boxLength/2 - dh/2; break;
+                case "Left":  fx = leftX - matThick/2; fy = boxHeight/2 - dw/2; fz = boxLength/2 - dh/2; break;
+            }
+            fingerMesh.position.set(fx, fy, fz);
+            meshGroup.add(fingerMesh);
+            return;
+        }
         let panelGeom, panelMesh;
         
         switch(side){
@@ -2868,9 +3142,6 @@ function selectShape(e,shape,comp, compId){
 
 function updateCommandOutput() {
     const projectName = document.getElementById("projectName").value || "MyProject";
-    const materialThickness = parseFloat(document.getElementById("materialThick").value || "3");
-    const boxHeight = parseFloat(document.getElementById("projectHeight").value || "30");
-    const outerSizing = document.getElementById("outerSizing").checked;
 
     let command = `--json-file ${projectName}.json`; // Optional from 1.0.3: --material-thickness ${materialThickness.toFixed(2)} --box-height-3d ${boxHeight.toFixed(2)} 
 
@@ -2879,7 +3150,7 @@ function updateCommandOutput() {
         command += ` --outer-sizing`;
     }
 	*/
-    
+
     command += ` --output-directory outputFolder`;
     
     document.getElementById("commandOutput").value = command;
@@ -3198,6 +3469,34 @@ document.getElementById("outerSizing").addEventListener("change", (e) => {
     }
 });
 
+function onFingerChange(field, value) {
+    if(!selectedPart) return;
+    saveState();
+    parts.Generic[field] = value;
+    updateCommandOutput();
+    drawCanvas();
+    draw3D();
+    if (DEBUG_MODE) {
+        console.log(`${field} changed to:`, value);
+    }
+}
+
+document.getElementById("fingerJoint").addEventListener("change", (e) => {
+    onFingerChange("finger_joint", e.target.checked);
+});
+
+document.getElementById("fingerSize").addEventListener("input", (e) => {
+    onFingerChange("finger_size", parseFloat(e.target.value || "0"));
+});
+
+document.getElementById("fingerCount").addEventListener("input", (e) => {
+    onFingerChange("finger_count", parseInt(e.target.value || "0", 10));
+});
+
+document.getElementById("fingerClearance").addEventListener("input", (e) => {
+    onFingerChange("finger_clearance", parseFloat(e.target.value || "0"));
+});
+
 document.getElementById("undoBtn").addEventListener("click", undo);
 document.getElementById("redoBtn").addEventListener("click", redo);
 
@@ -3330,6 +3629,18 @@ document.getElementById("loadJSONBtn").addEventListener("click", () => {
 
                 if (parts.Generic.outer_sizing === undefined) {
                     parts.Generic.outer_sizing = false;
+                }
+
+                // Load finger joint settings
+                document.getElementById("fingerJoint").checked = generic.finger_joint || false;
+                document.getElementById("fingerSize").value = generic.finger_size || 0;
+                document.getElementById("fingerCount").value = generic.finger_count || 0;
+                document.getElementById("fingerClearance").value = generic.finger_clearance || 0;
+                if (parts.Generic.finger_joint === undefined) {
+                    parts.Generic.finger_joint = false;
+                    parts.Generic.finger_size = 0;
+                    parts.Generic.finger_count = 0;
+                    parts.Generic.finger_clearance = 0;
                 }
 
                 // Load part name
