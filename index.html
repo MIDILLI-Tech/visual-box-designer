@@ -96,6 +96,7 @@ limitations under the License.
     border: 1px solid #ccc;
     background: #fafafa;
     flex-shrink: 0;
+    overflow: visible; /* finger tabs protrude beyond the panel edge */
   }
 
   #resizeHandle {
@@ -348,6 +349,21 @@ limitations under the License.
   <input id="projectName" placeholder="MyProject">
   <button id="showJSONBtn" style="margin-top: 6px;">📄 Show JSON</button>
 
+  <label style="font-weight: bold; margin-top: 10px;">Current Side:</label>
+  <select id="sideSelector">
+    <option value="Front">Front</option>
+    <option value="Back">Back</option>
+    <option value="Top" selected>Top</option>
+    <option value="Bottom">Bottom</option>
+    <option value="Left">Left</option>
+    <option value="Right">Right</option>
+  </select>
+
+  <div style="display: flex; gap: 5px; margin: 3px 0;">
+    <button id="addRectBtn" title="Add Rectangle Component (Shortcut: Shift + R)" style="flex: 1; margin: 0;">+ ⬜</button>
+    <button id="addRoundedBtn" title="Add Rounded Component (Shortcut: Shift + C)" style="flex: 1; margin: 0;">+ ⚪</button>
+  </div>
+
   <div style="margin: 10px 0; padding: 10px; background: #e8e8e8; border-radius: 4px;">
     <label style="font-weight: bold; display: block; margin-bottom: 5px;">Enabled Sides:</label>
     <label style="display: inline-block; width: auto; margin: 3px 0; cursor: pointer;">
@@ -429,22 +445,32 @@ limitations under the License.
         <small style="color: #666;">Extra width for finger slots</small>
       </div>
     </div>
+    <div style="margin: 8px 0 0;">
+      <label style="font-weight: bold; display: block; margin-bottom: 4px;">Finger Sides:</label>
+      <label style="display: inline-block; width: auto; margin: 2px 8px 2px 0; cursor: pointer;">
+          <input type="checkbox" id="fingerCheckTop" checked style="width: auto; margin: 0;"> Top
+      </label>
+      <label style="display: inline-block; width: auto; margin: 2px 8px 2px 0; cursor: pointer;">
+          <input type="checkbox" id="fingerCheckBottom" checked style="width: auto; margin: 0;"> Bottom
+      </label>
+      <label style="display: inline-block; width: auto; margin: 2px 8px 2px 0; cursor: pointer;">
+          <input type="checkbox" id="fingerCheckFront" checked style="width: auto; margin: 0;"> Front
+      </label>
+      <label style="display: inline-block; width: auto; margin: 2px 8px 2px 0; cursor: pointer;">
+          <input type="checkbox" id="fingerCheckBack" checked style="width: auto; margin: 0;"> Back
+      </label>
+      <label style="display: inline-block; width: auto; margin: 2px 8px 2px 0; cursor: pointer;">
+          <input type="checkbox" id="fingerCheckLeft" checked style="width: auto; margin: 0;"> Left
+      </label>
+      <label style="display: inline-block; width: auto; margin: 2px 0; cursor: pointer;">
+          <input type="checkbox" id="fingerCheckRight" checked style="width: auto; margin: 0;"> Right
+      </label>
+      <small style="color: #666; display: block; margin-top: 4px;">
+        Uncheck a side to keep that panel's edges plain (no finger joints).
+      </small>
+    </div>
   </div>
 
-  <label style="font-weight: bold; margin-top: 10px;">Current Side:</label>
-  <select id="sideSelector">
-    <option value="Front">Front</option>
-    <option value="Back">Back</option>
-    <option value="Top" selected>Top</option>
-    <option value="Bottom">Bottom</option>
-    <option value="Left">Left</option>
-    <option value="Right">Right</option>
-  </select>
-
-  <div style="display: flex; gap: 5px; margin: 3px 0;">
-    <button id="addRectBtn" title="Add Rectangle Component (Shortcut: Shift + R)" style="flex: 1; margin: 0;">+ ⬜</button>
-    <button id="addRoundedBtn" title="Add Rounded Component (Shortcut: Shift + C)" style="flex: 1; margin: 0;">+ ⚪</button>
-  </div>
 
 </div>
 
@@ -649,7 +675,7 @@ limitations under the License.
       <ul>
         <li>Front, Back, Top, Bottom, Left, Right</li>
         <li>Uncheck unused sides to exclude from design</li>
-        <li>Click <kbd>Update Sides</kbd> after changing sides. Note: If a side is unchecked, this will also remove the components on that side.</li>
+        <li>Side changes apply automatically. Note: unchecking a side also removes the components on that side.</li>
       </ul>
     </div>
     
@@ -714,7 +740,7 @@ limitations under the License.
             <li><kbd>Ctrl + D</kbd> - Duplicate selected component (when component is selected)</li>
             <li><kbd>Delete</kbd> - Delete selected component (when component is selected)</li>
             <li><kbd>Escape</kbd> - Deselect component</li>
-            <li><kbd>Enter</kbd> - Update Sides (when editing component properties)</li>
+            <li><kbd>Enter</kbd> - Apply component property changes</li>
         </ul>
         </div>
 
@@ -1719,23 +1745,15 @@ svgContainer.addEventListener("contextmenu", (e) => {
 });
 
 svgContainer.addEventListener("wheel", (e) => {
-    if (!selectedElement) {
-        e.preventDefault();
-        
-        const delta = e.deltaY > 0 ? 0.9 : 1.1;
-        const newScale = svgPanZoom.scale * delta;
-        
-        if (newScale >= svgPanZoom.minScale && newScale <= svgPanZoom.maxScale) {
-            const rect = svgContainer.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            
-            svgPanZoom.offset.x = mouseX - (mouseX - svgPanZoom.offset.x) * delta;
-            svgPanZoom.offset.y = mouseY - (mouseY - svgPanZoom.offset.y) * delta;
-            
-            svgPanZoom.scale = newScale;
-            updateSVGTransform();
-        }
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const newScale = svgPanZoom.scale * delta;
+    if (newScale >= svgPanZoom.minScale && newScale <= svgPanZoom.maxScale) {
+        const rect = svg.getBoundingClientRect();
+        svgPanZoom.offset.x -= (e.clientX - rect.left) * (delta - 1);
+        svgPanZoom.offset.y -= (e.clientY - rect.top) * (delta - 1);
+        svgPanZoom.scale = newScale;
+        updateSVGTransform();
     }
 });
 
@@ -1744,18 +1762,32 @@ function updateSVGTransform() {
     svg.style.transformOrigin = "0 0";
 }
 
+// Scales the 2D drawing to fit the visible container. The container flex-centers
+// the unscaled svg, so we only compensate for the shrink/grow around the
+// top-left transform origin to keep the scaled drawing centered.
+function fitSvgToScreen() {
+    const rect = svgContainer.getBoundingClientRect();
+    const sw = parseFloat(svg.getAttribute("width")) || 1;
+    const sh = parseFloat(svg.getAttribute("height")) || 1;
+    if (rect.width < 10 || rect.height < 10 || sw < 1 || sh < 1) return;
+    const fit = Math.min(rect.width / sw, rect.height / sh) * 0.92;
+    svgPanZoom.scale = Math.max(svgPanZoom.minScale, Math.min(svgPanZoom.maxScale, fit));
+    svgPanZoom.offset = {
+        x: (sw - sw * svgPanZoom.scale) / 2,
+        y: (sh - sh * svgPanZoom.scale) / 2
+    };
+    updateSVGTransform();
+}
+
 document.getElementById("sideSelector").addEventListener("change", e => {
-    svgPanZoom.offset = { x: 0, y: 0 };
-    svgPanZoom.scale = 0.9;
     selectedSide = e.target.value;
     drawCanvas();
+    fitSvgToScreen();
     draw3D();
 });
 
 svgContainer.addEventListener("dblclick", () => {
-    svgPanZoom.offset = { x: 0, y: 0 };
-    svgPanZoom.scale = 0.9;
-    updateSVGTransform();
+    fitSvgToScreen();
 });
 
 // --- THREE.js Setup ---
@@ -1811,7 +1843,13 @@ function createEmptyPart(name){
             "finger_joint": fingerJson.finger_joint,
             "finger_size": fingerJson.finger_size,
             "finger_count": fingerJson.finger_count,
-            "finger_clearance": fingerJson.finger_clearance
+            "finger_clearance": fingerJson.finger_clearance,
+            "finger_joint_top": fingerJson.finger_joint_top,
+            "finger_joint_bottom": fingerJson.finger_joint_bottom,
+            "finger_joint_front": fingerJson.finger_joint_front,
+            "finger_joint_back": fingerJson.finger_joint_back,
+            "finger_joint_left": fingerJson.finger_joint_left,
+            "finger_joint_right": fingerJson.finger_joint_right
         }
     };
     activeSides.forEach(s => {
@@ -1873,8 +1911,8 @@ function updateSideSelector() {
     drawCanvas();
 }
 
-document.getElementById("updatePartBtn").addEventListener("click",()=>{
-    saveState();
+function syncPartModel(save = true) {
+    if(save) saveState();
     const oldName = selectedPart;
     const newName = document.getElementById("projectName").value || "MyProject";
     const activeSides = getActiveSides();
@@ -1889,13 +1927,13 @@ document.getElementById("updatePartBtn").addEventListener("click",()=>{
                 newPart[newSideKey] = parts[oldSideKey];
             }
         });
-        
+
         const allSides = ["Front", "Back", "Top", "Bottom", "Left", "Right"];
         delete parts.Generic;
         allSides.forEach(side => {
             delete parts[`${oldName}_${side}`];
         });
-        
+
         parts = newPart;
         selectedPart = newName;
     } else if(!selectedPart) {
@@ -1914,7 +1952,13 @@ document.getElementById("updatePartBtn").addEventListener("click",()=>{
             "finger_joint": fingerJson.finger_joint,
             "finger_size": fingerJson.finger_size,
             "finger_count": fingerJson.finger_count,
-            "finger_clearance": fingerJson.finger_clearance
+            "finger_clearance": fingerJson.finger_clearance,
+            "finger_joint_top": fingerJson.finger_joint_top,
+            "finger_joint_bottom": fingerJson.finger_joint_bottom,
+            "finger_joint_front": fingerJson.finger_joint_front,
+            "finger_joint_back": fingerJson.finger_joint_back,
+            "finger_joint_left": fingerJson.finger_joint_left,
+            "finger_joint_right": fingerJson.finger_joint_right
         };
         const allSides = ["Front", "Back", "Top", "Bottom", "Left", "Right"];
         allSides.forEach(side => {
@@ -1930,7 +1974,34 @@ document.getElementById("updatePartBtn").addEventListener("click",()=>{
     updateSideSelector();
     drawCanvas();
     draw3D();
+}
+
+document.getElementById("updatePartBtn").addEventListener("click",()=> syncPartModel());
+
+// Auto-sync: keep the parts model in step with the UI without needing the
+// (now hidden) Update Sides button. Debounced so typing stays smooth.
+let partSyncTimer = null;
+function schedulePartSync() {
+    clearTimeout(partSyncTimer);
+    partSyncTimer = setTimeout(() => {
+        syncPartModel(false);
+        fitSvgToScreen();
+    }, 300);
+}
+["projectWidth", "projectLength", "projectHeight", "materialThick", "outerSizing",
+ "fingerJoint", "fingerSize", "fingerCount", "fingerClearance"].forEach(id => {
+    document.getElementById(id).addEventListener("input", schedulePartSync);
+    document.getElementById(id).addEventListener("change", schedulePartSync);
 });
+["Top", "Bottom", "Front", "Back", "Left", "Right"].forEach(s => {
+    document.getElementById(`fingerCheck${s}`).addEventListener("change", schedulePartSync);
+    document.getElementById(`sideCheck${s}`).addEventListener("change", schedulePartSync);
+});
+document.getElementById("projectName").addEventListener("change", schedulePartSync);
+updatePartBtn.style.display = "none";
+// Defer the initial model sync until the whole script (incl. the THREE.js scene)
+// has finished evaluating.
+setTimeout(() => syncPartModel(false), 0);
 
 function updatePartSelector(){
     const sel = document.getElementById("partSelector");
@@ -1999,48 +2070,192 @@ function computeFingerPattern(edgeLengthMm, fingerSizeMm, clearanceMm, fingerCou
     return { slots, tabs };
 }
 
+// One edge of a panel that may carry a finger joint profile.
+// tabsMm/slotsMm hold feature [start, width] positions along the edge in mm,
+// measured from the edge's reference corner (see buildFingerPath).
+function emptyEdge() { return { tabs: [], slots: [] }; }
+
+// Per-side finger joint flags from the UI checkboxes.
+// Side enabled = master fingerJoint && its own checkbox.
+function getFingerSideFlags() {
+    const master = document.getElementById("fingerJoint").checked;
+    const flags = {};
+    ["Top", "Bottom", "Front", "Back", "Left", "Right"].forEach(s => {
+        flags[s] = master && document.getElementById(`fingerCheck${s}`).checked;
+    });
+    return flags;
+}
+
+// Port of the C++ set_edge logic (svggenerator.cpp).
+// Computes the finger profile for all 4 edges of the given panel.
+// side: "Front"|"Back"|"Left"|"Right"|"Top"|"Bottom"
+// dims: {w,h} in cm (from getPanelDims)
+// finger: from getFingerSettings()
+// activeSides: array of enabled side names (for has_* checks).
+// outerSizing: boolean, flips cap-edge roles like the C++ tools.
+// Role convention: at each joint the panel that sits INSET protrudes tabs
+// (panel A: tabs first incl. corners); the covering panel gets complementary
+// slots (panel B). Vertical corner edges: Front/Back are inset -> panel A,
+// Left/Right -> panel B in both sizing modes. Cap edges: inner sizing insets
+// the caps (caps = panel A, walls = panel B); outer sizing insets the walls
+// under the caps (walls = panel A, caps = panel B).
+// Cap-seam emission rule (flat cut, matches the C++ tools):
+//   inner caps: tabs only, protruding t into the wall band notches (the lid
+//     cannot drop through); no slots - they would hang over the interior
+//   outer caps: slots only, receiving the wall tabs that rise into the slab
+//   wall cap edges, inner: band slots only (notches receive the cap tabs)
+//   wall cap edges, outer: tabs only (they rise into the cap slab)
+// Returns { top, right, bottom, left } where each is an edge {tabs, slots} in mm.
+function computePanelEdges(side, dims, finger, activeSides, outerSizing) {
+    const edges = { top: emptyEdge(), right: emptyEdge(), bottom: emptyEdge(), left: emptyEdge() };
+    if (!finger.fingerJoint) return edges;
+
+    const f = getFingerSideFlags();
+    // Finger profiles follow ONLY the finger-side switches - even when a side
+    // panel is removed, the remaining panels keep fingered edges facing the
+    // opening (e.g. print the box without a back, slot in a custom back panel).
+    const capsPanelA = !outerSizing;
+    const wallCapA = !capsPanelA; // wall role on cap-mating edges
+
+    const setEdge = (on, lenMm, panelA, flip, edge, capSeam = false, wallPanel = false, centralShiftMm = 0, vertSeam = false) => {
+        if (!on) return;
+        const genLen = lenMm - 2 * centralShiftMm;
+        if (genLen < finger.fingerSize) return;
+        const pat = computeFingerPattern(genLen, finger.fingerSize, finger.fingerClearance, finger.fingerCount, panelA);
+        let tabs = pat.tabs.map(p => [p[0] + centralShiftMm, p[1]]);
+        let slots = pat.slots.map(p => [p[0] + centralShiftMm, p[1]]);
+        if (flip) {
+            for (const tb of tabs) tb[0] = lenMm - (tb[0] + tb[1]);
+            for (const sl of slots) sl[0] = lenMm - (sl[0] + sl[1]);
+        }
+        if (capSeam) {
+            if (!wallPanel) {
+                if (outerSizing) tabs = [];  // outer caps: slots only (receive the wall tabs)
+                else slots = [];             // inner caps: tabs only - slots between tabs would
+                                             // hang over the interior and show as through-holes
+            }
+            else if (!outerSizing) tabs = []; // inner walls: band slots only
+            else slots = [];                  // outer walls: tabs only
+        }
+        if (vertSeam) {
+            // Vertical corners: primary features only, so no part exceeds the outer
+            // envelope: Front/Back protrude tabs, Left/Right cut slots only.
+            if (side === "Front" || side === "Back") slots = [];
+            else tabs = [];
+        }
+        edge.tabs = tabs;
+        edge.slots = slots;
+    };
+
+    // centralShiftMm > 0: pattern spans the central zone (len - 2*t) offset by t,
+    // end zones stay solid (v2 corner parity - clean corners).
+    const tMm = finger.materialThicknessMm;
+    const vShift = outerSizing ? 0 : tMm;   // inner verticals: central H only
+    // L/R cap edges: central zone in BOTH modes (outer L/R face spans full depth L)
+    const cShiftWall = tMm;
+    const cShiftCap = outerSizing ? tMm : 0;  // outer caps: central wall width only
+
+    if (side === "Front" || side === "Back") {
+        const self = side;
+        const vertLen = dims.h * 10;   // vertical corner edge (mating Left/Right)
+        const horizLen = dims.w * 10;  // cap edge (mating Top/Bottom)
+        // Crushed-from-above, walls folded INWARD, seen from above:
+        // Front falls backward  -> stands upright  (drawing-top mates the TOP cap);
+        // Back falls forward    -> flipped         (drawing-top mates the BOTTOM cap).
+        // Both keep drawing-left = box left (+X).
+        setEdge(f[self] && f.Left, vertLen, true, false, edges.left, false, false, vShift, true);
+        setEdge(f[self] && f.Right, vertLen, true, false, edges.right, false, false, vShift, true);
+        if (side === "Front") {
+            setEdge(f[self] && f.Top,    horizLen, wallCapA, false, edges.top, true, true);
+            setEdge(f[self] && f.Bottom, horizLen, wallCapA, false, edges.bottom, true, true);
+        } else {
+            setEdge(f[self] && f.Bottom, horizLen, wallCapA, false, edges.top, true, true);
+            setEdge(f[self] && f.Top,    horizLen, wallCapA, false, edges.bottom, true, true);
+        }
+    } else if (side === "Left" || side === "Right") {
+        const isLeft = side === "Left";
+        const vertLen = dims.w * 10;   // vertical corner edge (mating Front/Back)
+        const horizLen = dims.h * 10;  // cap edge (mating Top/Bottom)
+        // Crushed inward: the Left wall's top edge points to the drawing RIGHT
+        // (e_left mates Bottom), the Right wall's to the drawing LEFT (e_left mates
+        // Top). Drawing-top = back (+Z) for both.
+        setEdge(f[side] && f.Back,  vertLen, false, false, edges.top, false, false, vShift, true);
+        setEdge(f[side] && f.Front, vertLen, false, false, edges.bottom, false, false, vShift, true);
+        if (isLeft) {
+            setEdge(f[side] && f.Bottom, horizLen, wallCapA, false, edges.left, true, true, cShiftWall);
+            setEdge(f[side] && f.Top,    horizLen, wallCapA, false, edges.right, true, true, cShiftWall);
+        } else {
+            setEdge(f[side] && f.Top,    horizLen, wallCapA, false, edges.left, true, true, cShiftWall);
+            setEdge(f[side] && f.Bottom, horizLen, wallCapA, false, edges.right, true, true, cShiftWall);
+        }
+    } else { // Top or Bottom
+        const fbLen = dims.w * 10;   // cap front/back edges (mating Front/Back)
+        const lrLen = dims.h * 10;   // cap left/right edges (mating Left/Right)
+        // Inside-view convention: drawing-top = box back, drawing-left = box left,
+        // so e_top mates Back, e_bottom mates Front, e_left mates Left (+X), e_right mates Right (-X).
+        // Flip flags compensate the mirrored cap mapping so patterns land world-aligned.
+        setEdge(f[side] && f.Back,  fbLen, capsPanelA, true,  edges.top, true, false, cShiftCap);
+        setEdge(f[side] && f.Front, fbLen, capsPanelA, true,  edges.bottom, true, false, cShiftCap);
+        setEdge(f[side] && f.Left,  lrLen, capsPanelA, side === "Bottom", edges.left, true, false, cShiftCap);
+        setEdge(f[side] && f.Right, lrLen, capsPanelA, side === "Top",    edges.right, true, false, cShiftCap);
+    }
+    return edges;
+}
+
 // Builds the closed SVG outline path of a panel whose edges carry a finger profile.
-// fingerOnVerticalEdges = true for Front/Back (fingers on left/right edges),
-// false for Left/Right (slots cut into the top/bottom edges).
-// widthCm/heightCm are the panel dimensions, thicknessCm the material thickness.
-// tabsMm/slotsMm hold feature [start, width] positions along the finger edge in mm.
-// Coordinates are in the 2D canvas space (cm * pxPerCm, y top-down).
-function buildFingerPath(widthCm, heightCm, thicknessCm, tabsMm, slotsMm, fingerOnVerticalEdges) {
+// Traverses clockwise from the top-left corner: top edge left->right, right edge
+// top->bottom, bottom edge right->left, left edge bottom->top.
+// Edge features are measured from: top edge -> left corner (x=0), right edge -> top
+// corner (y=0), bottom edge -> left corner (x=0), left edge -> top corner (y=0).
+// Tabs protrude OUTWARD by the material thickness; slots are cut INWARD.
+function buildFingerPath(widthCm, heightCm, thicknessCm, edges) {
     const W = widthCm * pxPerCm;
     const H = heightCm * pxPerCm;
     const t = thicknessCm * pxPerCm;
     const toPx = (mm) => mm / 10 * pxPerCm;
 
-    const features = [];
-    for (const [start, width] of tabsMm) features.push({ start: toPx(start), end: toPx(start + width), isTab: true });
-    for (const [start, width] of slotsMm) features.push({ start: toPx(start), end: toPx(start + width), isTab: false });
-    features.sort((a, b) => a.start - b.start);
+    const featuresOf = (edge) => {
+        const features = [];
+        for (const [start, width] of edge.tabs) features.push({ start: toPx(start), end: toPx(start + width), isTab: true });
+        for (const [start, width] of edge.slots) features.push({ start: toPx(start), end: toPx(start + width), isTab: false });
+        features.sort((a, b) => a.start - b.start);
+        return features;
+    };
+
+    const topF = featuresOf(edges.top);
+    const rightF = featuresOf(edges.right);
+    const bottomF = featuresOf(edges.bottom);
+    const leftF = featuresOf(edges.left);
 
     let path = `M 0 0`;
 
-    if (fingerOnVerticalEdges) {
-        // Slots keep their original edge position; only real tabs protrude outward by material thickness.
-        for (const f of features) {
-            const dx = f.isTab ? -t : 0;
-            path += ` L 0 ${f.start.toFixed(2)} L ${dx.toFixed(2)} ${f.start.toFixed(2)} L ${dx.toFixed(2)} ${f.end.toFixed(2)} L 0 ${f.end.toFixed(2)}`;
-        }
-        path += ` L 0 ${H.toFixed(2)} L ${W.toFixed(2)} ${H.toFixed(2)}`;
-        for (let i = features.length - 1; i >= 0; i--) {
-            const f = features[i];
-            const dx = f.isTab ? t : 0;
-            path += ` L ${W.toFixed(2)} ${f.end.toFixed(2)} L ${(W + dx).toFixed(2)} ${f.end.toFixed(2)} L ${(W + dx).toFixed(2)} ${f.start.toFixed(2)} L ${W.toFixed(2)} ${f.start.toFixed(2)}`;
-        }
-        path += ` L ${W.toFixed(2)} 0 L 0 0`;
-    } else {
-        for (const f of features) {
-            path += ` L ${f.start.toFixed(2)} 0 L ${f.start.toFixed(2)} ${t.toFixed(2)} L ${f.end.toFixed(2)} ${t.toFixed(2)} L ${f.end.toFixed(2)} 0`;
-        }
-        path += ` L ${W.toFixed(2)} 0 L ${W.toFixed(2)} ${H.toFixed(2)}`;
-        for (let i = features.length - 1; i >= 0; i--) {
-            const f = features[i];
-            path += ` L ${f.end.toFixed(2)} ${H.toFixed(2)} L ${f.end.toFixed(2)} ${(H - t).toFixed(2)} L ${f.start.toFixed(2)} ${(H - t).toFixed(2)} L ${f.start.toFixed(2)} ${H.toFixed(2)}`;
-        }
-        path += ` L 0 ${H.toFixed(2)} L 0 0`;
+    // Top edge (y=0), traversing left -> right. Tabs protrude up (-t), slots dip down (+t).
+    for (const f of topF) {
+        const dy = f.isTab ? -t : t;
+        path += ` L ${f.start.toFixed(2)} 0 L ${f.start.toFixed(2)} ${dy.toFixed(2)} L ${f.end.toFixed(2)} ${dy.toFixed(2)} L ${f.end.toFixed(2)} 0`;
+    }
+    path += ` L ${W.toFixed(2)} 0`;
+
+    // Right edge (x=W), traversing top -> bottom. Tabs protrude right (+t), slots dip left (-t).
+    for (const f of rightF) {
+        const dx = f.isTab ? t : -t;
+        path += ` L ${W.toFixed(2)} ${f.start.toFixed(2)} L ${(W + dx).toFixed(2)} ${f.start.toFixed(2)} L ${(W + dx).toFixed(2)} ${f.end.toFixed(2)} L ${W.toFixed(2)} ${f.end.toFixed(2)}`;
+    }
+    path += ` L ${W.toFixed(2)} ${H.toFixed(2)}`;
+
+    // Bottom edge (y=H), traversing right -> left. Tabs protrude down (+t), slots dip up (-t).
+    for (let i = bottomF.length - 1; i >= 0; i--) {
+        const f = bottomF[i];
+        const dy = f.isTab ? t : -t;
+        path += ` L ${f.end.toFixed(2)} ${H.toFixed(2)} L ${f.end.toFixed(2)} ${(H + dy).toFixed(2)} L ${f.start.toFixed(2)} ${(H + dy).toFixed(2)} L ${f.start.toFixed(2)} ${H.toFixed(2)}`;
+    }
+    path += ` L 0 ${H.toFixed(2)}`;
+
+    // Left edge (x=0), traversing bottom -> top. Tabs protrude left (-t), slots dip right (+t).
+    for (let i = leftF.length - 1; i >= 0; i--) {
+        const f = leftF[i];
+        const dx = f.isTab ? -t : t;
+        path += ` L 0 ${f.end.toFixed(2)} L ${dx.toFixed(2)} ${f.end.toFixed(2)} L ${dx.toFixed(2)} ${f.start.toFixed(2)} L 0 ${f.start.toFixed(2)}`;
     }
     path += ` Z`;
     return path;
@@ -2054,20 +2269,30 @@ function getFingerSettings() {
     const fingerCount = parseInt(document.getElementById("fingerCount").value || "0", 10);
     const fingerClearanceMm = parseFloat(document.getElementById("fingerClearance").value || "0");
     const fingerSize = fingerSizeMm > 0 ? fingerSizeMm : matThick * 10; // mm
-    return { fingerJoint, fingerSize, fingerCount, fingerClearance: fingerClearanceMm, fingerSizeMm };
+    const sides = {};
+    ["Top", "Bottom", "Front", "Back", "Left", "Right"].forEach(s => {
+        sides[s] = document.getElementById(`fingerCheck${s}`).checked;
+    });
+    return { fingerJoint, fingerSize, fingerCount, fingerClearance: fingerClearanceMm, fingerSizeMm, materialThicknessMm: matThick * 10, sides };
 }
 
 // Finger joint values to store in parts.Generic (JSON export).
 function readFingerSettingsFromUI() {
-    return {
+    const result = {
         finger_joint: document.getElementById("fingerJoint").checked,
         finger_size: parseFloat(document.getElementById("fingerSize").value || "0"),
         finger_count: parseInt(document.getElementById("fingerCount").value || "0", 10),
         finger_clearance: parseFloat(document.getElementById("fingerClearance").value || "0")
     };
+    ["Top", "Bottom", "Front", "Back", "Left", "Right"].forEach(s => {
+        result[`finger_joint_${s.toLowerCase()}`] = document.getElementById(`fingerCheck${s}`).checked;
+    });
+    return result;
 }
 
 // Panel geometry (cm) for the given side, matching the C++ tools.
+// Top/Bottom caps are always W x L: they either fit inside the walls (inner
+// sizing) or cover the full footprint (outer sizing). Matches the CLI tools.
 function getPanelDims(side, partWidth, partLength, partHeight, matThick, outerSizing) {
     const os = outerSizing ? 1 : 0;
     const e = partHeight + 2 * matThick * (1 - os) - 2 * matThick * os; // height-edge length
@@ -2085,55 +2310,82 @@ function getPanelDims(side, partWidth, partLength, partHeight, matThick, outerSi
 }
 
 // Panel outline polygon points (cm, 2D canvas coords, y top-down) with the finger profile.
-function getPanelOutlineCm(dims, matThickCm, finger, isFrontBack) {
+// Traverses clockwise from the top-left corner, same rules as buildFingerPath.
+function getPanelOutlineCm(dims, matThickCm, edges) {
     const W = dims.w, H = dims.h, t = matThickCm;
-    const edgeLenMm = (isFrontBack ? H : W) * 10;
-    const pattern = computeFingerPattern(edgeLenMm, finger.fingerSize, finger.fingerClearance, finger.fingerCount, isFrontBack);
-    const features = [];
-    for (const [s, w] of (isFrontBack ? pattern.tabs : [])) features.push({ start: s / 10, end: (s + w) / 10, isTab: true });
-    for (const [s, w] of pattern.slots) features.push({ start: s / 10, end: (s + w) / 10, isTab: false });
-    features.sort((a, b) => a.start - b.start);
+    const toCm = (mm) => mm / 10;
+
+    const featuresOf = (edge) => {
+        const features = [];
+        for (const [start, width] of edge.tabs) features.push({ start: toCm(start), end: toCm(start + width), isTab: true });
+        for (const [start, width] of edge.slots) features.push({ start: toCm(start), end: toCm(start + width), isTab: false });
+        features.sort((a, b) => a.start - b.start);
+        return features;
+    };
+
+    const topF = featuresOf(edges.top);
+    const rightF = featuresOf(edges.right);
+    const bottomF = featuresOf(edges.bottom);
+    const leftF = featuresOf(edges.left);
 
     const pts = [[0, 0]];
-    if (isFrontBack) {
-        // Slots stay on the original boundary; tabs are the only parts that extend outward by material thickness.
-        for (const f of features) {
-            const dx = f.isTab ? -t : 0;
-            pts.push([0, f.start], [dx, f.start], [dx, f.end], [0, f.end]);
-        }
-        pts.push([0, H], [W, H]);
-        for (let i = features.length - 1; i >= 0; i--) {
-            const f = features[i];
-            const dx = f.isTab ? t : 0;
-            pts.push([W, f.end], [W + dx, f.end], [W + dx, f.start], [W, f.start]);
-        }
-        pts.push([W, 0], [0, 0]);
-    } else {
-        for (const f of features) {
-            pts.push([f.start, 0], [f.start, t], [f.end, t], [f.end, 0]);
-        }
-        pts.push([W, 0], [W, H]);
-        for (let i = features.length - 1; i >= 0; i--) {
-            const f = features[i];
-            pts.push([f.end, H], [f.end, H - t], [f.start, H - t], [f.start, H]);
-        }
-        pts.push([0, H], [0, 0]);
+    for (const f of topF) {
+        const dy = f.isTab ? -t : t;
+        pts.push([f.start, 0], [f.start, dy], [f.end, dy], [f.end, 0]);
     }
+    pts.push([W, 0]);
+    for (const f of rightF) {
+        const dx = f.isTab ? t : -t;
+        pts.push([W, f.start], [W + dx, f.start], [W + dx, f.end], [W, f.end]);
+    }
+    pts.push([W, H]);
+    for (let i = bottomF.length - 1; i >= 0; i--) {
+        const f = bottomF[i];
+        const dy = f.isTab ? t : -t;
+        pts.push([f.end, H], [f.end, H + dy], [f.start, H + dy], [f.start, H]);
+    }
+    pts.push([0, H]);
+    for (let i = leftF.length - 1; i >= 0; i--) {
+        const f = leftF[i];
+        const dx = f.isTab ? -t : t;
+        pts.push([0, f.end], [dx, f.end], [dx, f.start], [0, f.start]);
+    }
+    pts.push([0, 0]);
     return pts;
 }
 
-// Builds the 3D mesh for a finger-jointed wall panel from its 2D profile.
-function createFingerPanelMesh(side, dims, matThickCm, finger, material) {
+// Builds the 3D mesh for a finger-jointed panel from its 2D profile (all sides incl. caps).
+function createFingerPanelMesh(side, dims, matThickCm, finger, material, activeSides, outerSizing) {
     const isFrontBack = side === "Front" || side === "Back";
-    const pts = getPanelOutlineCm(dims, matThickCm, finger, isFrontBack);
+    const isLeftRight = side === "Left" || side === "Right";
+    const edges = computePanelEdges(side, dims, finger, activeSides, outerSizing);
+    const pts = getPanelOutlineCm(dims, matThickCm, edges);
     const shape = new THREE.Shape();
     let lastGx = null, lastGy = null;
     for (let i = 0; i < pts.length; i++) {
         const [x2, y2] = pts[i];
         // Map 2D top-down coords into a world-oriented local frame (y up).
         // Front/Back: X = width, Y = height. Left/Right: X = length (depth), Y = height.
-        const gx = isFrontBack ? x2 : (side === "Right" ? y2 : -y2);
-        const gy = (isFrontBack ? dims.h : dims.w) - (isFrontBack ? y2 : x2);
+        // Top/Bottom caps: X = width, Y = length (flat, rotated to horizontal below).
+        let gx, gy;
+        if (isFrontBack) {
+            // Crushed inward, seen from above: drawing-left = box left (+X) for both.
+            // Front stands upright (drawing-top = wall top); Back is flipped
+            // (drawing-top = wall bottom).
+            gx = dims.w - x2;
+            gy = side === "Front" ? dims.h - y2 : y2;
+        } else if (isLeftRight) {
+            // Crushed inward, drawing-top = back (+Z) for both.
+            // Left: top edge at drawing-RIGHT  (world Y = x2, e_left mates Bottom).
+            // Right: top edge at drawing-LEFT (world Y = dims.w - x2, e_left mates Top).
+            gx = side === "Left" ? y2 : -y2;
+            gy = side === "Left" ? x2 : dims.w - x2;
+        } else {
+            // Caps (Top/Bottom): drawn/previewed as the INSIDE view (looking down into
+            // the box): drawing-top = box back, drawing-left = box left.
+            gx = dims.w - x2;
+            gy = side === "Bottom" ? dims.h - y2 : y2;
+        }
         // Skip consecutive duplicates (zero-length segments) for clean triangulation.
         if (lastGx === gx && lastGy === gy) continue;
         if (i === 0) {
@@ -2144,8 +2396,12 @@ function createFingerPanelMesh(side, dims, matThickCm, finger, material) {
         lastGx = gx; lastGy = gy;
     }
     const geo = new THREE.ExtrudeGeometry(shape, { depth: matThickCm, bevelEnabled: false });
-    if (!isFrontBack) {
+    if (isLeftRight) {
         geo.rotateY(side === "Right" ? -Math.PI / 2 : Math.PI / 2);
+    } else if (side === "Top") {
+        geo.rotateX(-Math.PI / 2);
+    } else if (side === "Bottom") {
+        geo.rotateX(Math.PI / 2);
     }
     return new THREE.Mesh(geo, material);
 }
@@ -2178,6 +2434,7 @@ function drawCanvas(){
                 break;
             case "Top":
             case "Bottom":
+                // Cap footprint: always W x L (matches getPanelDims and the CLI tools)
                 canvasW = partWidth * pxPerCm;
                 canvasH = partLength * pxPerCm;
                 break;
@@ -2200,6 +2457,7 @@ function drawCanvas(){
                 break;
             case "Top":
             case "Bottom":
+                // Cap footprint: always W x L (matches getPanelDims and the CLI tools)
                 canvasW = partWidth * pxPerCm;
                 canvasH = partLength * pxPerCm;
                 break;
@@ -2302,12 +2560,13 @@ function drawCanvas(){
     const outlineColor = isDarkTheme ? '#aaaaaa' : '#444444';
     const outlineEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
     let outlineD;
-    const isWallPanel = selectedSide === "Front" || selectedSide === "Back" || selectedSide === "Left" || selectedSide === "Right";
-    if (finger.fingerJoint && isWallPanel) {
-        const isFrontBack = selectedSide === "Front" || selectedSide === "Back";
-        const edgeLenMm = (isFrontBack ? dims.h : dims.w) * 10;
-        const pattern = computeFingerPattern(edgeLenMm, finger.fingerSize, finger.fingerClearance, finger.fingerCount, isFrontBack);
-        outlineD = buildFingerPath(dims.w, dims.h, matThick, isFrontBack ? pattern.tabs : [], pattern.slots, isFrontBack);
+    const edges = computePanelEdges(selectedSide, dims, finger, getActiveSides(), outerSizing);
+    const hasFeatures = edges.top.tabs.length + edges.top.slots.length +
+                        edges.right.tabs.length + edges.right.slots.length +
+                        edges.bottom.tabs.length + edges.bottom.slots.length +
+                        edges.left.tabs.length + edges.left.slots.length > 0;
+    if (finger.fingerJoint && hasFeatures) {
+        outlineD = buildFingerPath(dims.w, dims.h, matThick, edges);
     } else {
         outlineD = `M 0 0 L ${(dims.w * pxPerCm).toFixed(2)} 0 L ${(dims.w * pxPerCm).toFixed(2)} ${(dims.h * pxPerCm).toFixed(2)} L 0 ${(dims.h * pxPerCm).toFixed(2)} Z`;
     }
@@ -2763,8 +3022,8 @@ function draw3D(){
         backZ = boxLength - matThick/2;
         topY = boxHeight - matThick/2;
         bottomY = matThick/2;
-        rightX = matThick/2;
-        leftX = boxWidth - matThick/2;
+        rightX = boxWidth - matThick/2;
+        leftX = matThick/2;
     } else {
         const b = partHeight + matThick * 2;
         topBottomW = partWidth;
@@ -2779,22 +3038,33 @@ function draw3D(){
         backZ = boxLength + matThick/2;
         topY = boxHeight - matThick/2;
         bottomY = matThick/2;
-        rightX = -matThick/2;
-        leftX = boxWidth + matThick/2;
+        rightX = boxWidth + matThick/2;
+        leftX = -matThick/2;
     }
 
     const finger3D = getFingerSettings();
+    const hasAnyFingerFeatures = side => {
+        const d = getPanelDims(side, partWidth, partLength, partHeight, matThick, outerSizing);
+        const e = computePanelEdges(side, d, finger3D, activeSides, outerSizing);
+        return e.top.tabs.length + e.top.slots.length +
+               e.right.tabs.length + e.right.slots.length +
+               e.bottom.tabs.length + e.bottom.slots.length +
+               e.left.tabs.length + e.left.slots.length > 0;
+    };
     activeSides.forEach(side => {
-        if (finger3D.fingerJoint && (side === "Front" || side === "Back" || side === "Left" || side === "Right")) {
+        if (finger3D.fingerJoint && hasAnyFingerFeatures(side)) {
             const dims = getPanelDims(side, partWidth, partLength, partHeight, matThick, outerSizing);
-            const fingerMesh = createFingerPanelMesh(side, dims, matThick, finger3D, panelMat);
+            const fingerMesh = createFingerPanelMesh(side, dims, matThick, finger3D, panelMat, activeSides, outerSizing);
             let fx, fy, fz;
             const dw = dims.w, dh = dims.h;
             switch (side) {
                 case "Front": fx = boxWidth/2 - dw/2; fy = boxHeight/2 - dh/2; fz = frontZ - matThick/2; break;
                 case "Back":  fx = boxWidth/2 - dw/2; fy = boxHeight/2 - dh/2; fz = backZ - matThick/2; break;
-                case "Right": fx = rightX + matThick/2; fy = boxHeight/2 - dw/2; fz = boxLength/2 - dh/2; break;
-                case "Left":  fx = leftX - matThick/2; fy = boxHeight/2 - dw/2; fz = boxLength/2 - dh/2; break;
+                // L/R profiles span L+2t (inner): face zone [t, L+t] must land on world [0, L]
+                case "Right": fx = leftX + matThick/2; fy = boxHeight/2 - dw/2; fz = outerSizing ? boxLength : boxLength + matThick; break;
+                case "Left":  fx = rightX - matThick/2; fy = boxHeight/2 - dw/2; fz = outerSizing ? boxLength : boxLength + matThick; break;
+                case "Top":   fx = boxWidth/2 - dw/2; fy = topY - matThick/2; fz = boxLength/2 + dh/2; break;
+                case "Bottom": fx = boxWidth/2 - dw/2; fy = bottomY + matThick/2; fz = boxLength/2 - dh/2; break;
             }
             fingerMesh.position.set(fx, fy, fz);
             meshGroup.add(fingerMesh);
@@ -2836,9 +3106,9 @@ function draw3D(){
                 panelMesh = new THREE.Mesh(panelGeom, panelMat);
                 
                 if(outerSizing){
-                    panelMesh.position.set(rightX, boxHeight/2, boxLength/2);
+                    panelMesh.position.set(leftX, boxHeight/2, boxLength/2);
                 } else {
-                    panelMesh.position.set(rightX, boxHeight/2, boxLength/2);
+                    panelMesh.position.set(leftX, boxHeight/2, boxLength/2);
                 }
                 meshGroup.add(panelMesh);
                 break;
@@ -2847,9 +3117,9 @@ function draw3D(){
                 panelGeom = new THREE.BoxGeometry(matThick, leftRightH, leftRightL);
                 panelMesh = new THREE.Mesh(panelGeom, panelMat);
                 if(outerSizing){
-                    panelMesh.position.set(leftX, boxHeight/2, boxLength/2);
+                    panelMesh.position.set(rightX, boxHeight/2, boxLength/2);
                 } else {
-                    panelMesh.position.set(leftX, boxHeight/2, boxLength/2);
+                    panelMesh.position.set(rightX, boxHeight/2, boxLength/2);
                 }
                 meshGroup.add(panelMesh);
                 break;
@@ -2891,6 +3161,7 @@ function draw3D(){
         // Add components
         switch(side){
             case "Front":
+                // Front upright (matches Back): world Y mirrored
                 const y3D_front = boxHeight - c.location_y - yOffset;
                 const x3D_front = boxWidth - c.location_x - matThick * outerSizing;
                 
@@ -2924,6 +3195,7 @@ function draw3D(){
                 break;
 
             case "Back":
+                // Back is crushed flipped: drawing-top = wall bottom -> world Y direct
                 const y3D_back = c.location_y + yOffset;
                 const x3D_back = boxWidth - c.location_x - matThick * outerSizing;
 
@@ -3019,19 +3291,20 @@ function draw3D(){
                 break;
 
             case "Right":
+                // Crushed: Right's drawing-left = wall top -> world Y mirrored
                 const y3D_right = boxHeight - c.location_x - yOffset;
-                const z3D_right = boxLength - c.location_y + xOffset;
-                
+                const z3D_right = (outerSizing ? boxLength : boxLength + matThick) - c.location_y + xOffset;
+
                 if(useVisibleDiameter){
                     visibleGeom = new THREE.CylinderGeometry(c.visible_diameter/2, c.visible_diameter/2, matThick, 32);
                     visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
                     visibleMesh.rotation.z = Math.PI/2;
-                    visibleMesh.position.set(rightX, y3D_right, z3D_right);
+                    visibleMesh.position.set(leftX, y3D_right, z3D_right);
                     meshGroup.add(visibleMesh);
                 } else if(visibleW && visibleL){
                     visibleGeom = new THREE.BoxGeometry(matThick, visibleL, visibleW);
                     visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
-                    visibleMesh.position.set(rightX, y3D_right, z3D_right);
+                    visibleMesh.position.set(leftX, y3D_right, z3D_right);
                     visibleMesh.rotation.x = (c.rotation||0) * Math.PI/180;
                     meshGroup.add(visibleMesh);
                 }
@@ -3040,31 +3313,32 @@ function draw3D(){
                     drillGeom = new THREE.CylinderGeometry(c.drill_diameter/2, c.drill_diameter/2, matThick, 32);
                     drillMesh = new THREE.Mesh(drillGeom, drillMat);
                     drillMesh.rotation.z = Math.PI/2;
-                    drillMesh.position.set(rightX, y3D_right, z3D_right);
+                    drillMesh.position.set(leftX, y3D_right, z3D_right);
                     meshGroup.add(drillMesh);
                 } else if(drillW && drillL){
                     drillGeom = new THREE.BoxGeometry(matThick, drillL, drillW);
                     drillMesh = new THREE.Mesh(drillGeom, drillMat);
-                    drillMesh.position.set(rightX, y3D_right, z3D_right);
+                    drillMesh.position.set(leftX, y3D_right, z3D_right);
                     drillMesh.rotation.x = (c.rotation||0) * Math.PI/180;
                     meshGroup.add(drillMesh);
                 }
                 break;
 
             case "Left":
+                // Crushed: Left's drawing-left = wall bottom -> world Y direct
                 const y3D_left = c.location_x + yOffset;
-                const z3D_left = boxLength - c.location_y + xOffset;
-                
+                const z3D_left = (outerSizing ? boxLength : boxLength + matThick) - c.location_y + xOffset;
+
                 if(useVisibleDiameter){
                     visibleGeom = new THREE.CylinderGeometry(c.visible_diameter/2, c.visible_diameter/2, matThick, 32);
                     visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
                     visibleMesh.rotation.z = Math.PI/2;
-                    visibleMesh.position.set(leftX, y3D_left, z3D_left);
+                    visibleMesh.position.set(rightX, y3D_left, z3D_left);
                     meshGroup.add(visibleMesh);
                 } else if(visibleW && visibleL){
                     visibleGeom = new THREE.BoxGeometry(matThick, visibleL, visibleW);
                     visibleMesh = new THREE.Mesh(visibleGeom, visibleMat);
-                    visibleMesh.position.set(leftX, y3D_left, z3D_left);
+                    visibleMesh.position.set(rightX, y3D_left, z3D_left);
                     visibleMesh.rotation.x = (c.rotation||0) * Math.PI/180;
                     meshGroup.add(visibleMesh);
                 }
@@ -3073,12 +3347,12 @@ function draw3D(){
                     drillGeom = new THREE.CylinderGeometry(c.drill_diameter/2, c.drill_diameter/2, matThick, 32);
                     drillMesh = new THREE.Mesh(drillGeom, drillMat);
                     drillMesh.rotation.z = Math.PI/2;
-                    drillMesh.position.set(leftX, y3D_left, z3D_left);
+                    drillMesh.position.set(rightX, y3D_left, z3D_left);
                     meshGroup.add(drillMesh);
                 } else if(drillW && drillL){
                     drillGeom = new THREE.BoxGeometry(matThick, drillL, drillW);
                     drillMesh = new THREE.Mesh(drillGeom, drillMat);
-                    drillMesh.position.set(leftX, y3D_left, z3D_left);
+                    drillMesh.position.set(rightX, y3D_left, z3D_left);
                     drillMesh.rotation.x = (c.rotation||0) * Math.PI/180;
                     meshGroup.add(drillMesh);
                 }
@@ -3091,10 +3365,19 @@ function draw3D(){
 ["Front", "Back", "Top", "Bottom", "Left", "Right"].forEach(side => {
     document.getElementById(`sideCheck${side}`).addEventListener("change", () => {
         markAsChanged();
+        // Apply immediately: sync part sections + redraw 2D/3D so the preview
+        // always matches the checkboxes (no stale finger joints on removed sides).
+        const activeSides = getActiveSides();
+        const allSides = ["Front", "Back", "Top", "Bottom", "Left", "Right"];
+        allSides.forEach(s => {
+            const sideKey = `${selectedPart}_${s}`;
+            if (!activeSides.includes(s) && parts[sideKey]) delete parts[sideKey];
+            else if (activeSides.includes(s) && !parts[sideKey]) parts[sideKey] = {};
+        });
+        if (!activeSides.includes(selectedSide)) selectedSide = activeSides[0] || selectedSide;
         updateSideSelector();
-        if (DEBUG_MODE) {
-            console.log(`${side} changed - click Update Sides to apply`);
-        }
+        drawCanvas();
+        draw3D();
     });
 });
 
@@ -3104,11 +3387,10 @@ function selectShape(e,shape,comp, compId){
     selectedElement = {shape, comp, compId};
     isDragging = true;
     const rect = svg.getBoundingClientRect();
-    const mouseX = (e.clientX - rect.left) / pxPerCm;
-    const mouseY = (e.clientY - rect.top) / pxPerCm;
-
-    dragOffset.x = mouseX - comp.location_x;
-    dragOffset.y = mouseY - comp.location_y;
+    const svgCmX = (e.clientX - rect.left) / (svgPanZoom.scale * pxPerCm);
+    const svgCmY = (e.clientY - rect.top) / (svgPanZoom.scale * pxPerCm);
+    dragOffset.x = svgCmX - comp.location_x;
+    dragOffset.y = svgCmY - comp.location_y;
     
     document.getElementById("noSelection").style.display = "none";
     document.getElementById("componentFields").style.display = "block";
@@ -3143,16 +3425,8 @@ function selectShape(e,shape,comp, compId){
 function updateCommandOutput() {
     const projectName = document.getElementById("projectName").value || "MyProject";
 
-    let command = `--json-file ${projectName}.json`; // Optional from 1.0.3: --material-thickness ${materialThickness.toFixed(2)} --box-height-3d ${boxHeight.toFixed(2)} 
+    let command = `--json-file ${projectName}.json --output-directory outputFolder`;
 
-	/* Optional from 1.0.3
-    if (outerSizing) {
-        command += ` --outer-sizing`;
-    }
-	*/
-
-    command += ` --output-directory outputFolder`;
-    
     document.getElementById("commandOutput").value = command;
 }
 
@@ -3181,13 +3455,10 @@ document.getElementById("copyCommandBtn").addEventListener("click", () => {
 
 svg.addEventListener("mousemove", (e)=>{
     if(!isDragging || !selectedElement) return;
-    
+
     const rect = svg.getBoundingClientRect();
-    // Calculate scaled mouse position
-    let scaledX = (e.clientX - rect.left - svgPanZoom.offset.x) / svgPanZoom.scale;
-    let scaledY = (e.clientY - rect.top - svgPanZoom.offset.y) / svgPanZoom.scale;
-    let newX = scaledX / pxPerCm - dragOffset.x;
-    let newY = scaledY / pxPerCm - dragOffset.y;
+    let newX = (e.clientX - rect.left) / (svgPanZoom.scale * pxPerCm) - dragOffset.x;
+    let newY = (e.clientY - rect.top) / (svgPanZoom.scale * pxPerCm) - dragOffset.y;
     
     if(gridSnap){
         newX = Math.round(newX / gridSizeX) * gridSizeX;
@@ -3327,7 +3598,7 @@ document.getElementById("addRectBtn").addEventListener("click",()=>{
         return;
     }
     if(!parts[cSideKey]) {
-        alert("❌ Please click 'Update Sides' button before adding components!");
+        alert("❌ Part model is not ready yet - adjust any setting or re-enable the side!");
         return;
     }
 
@@ -3386,7 +3657,7 @@ document.getElementById("addRoundedBtn").addEventListener("click",()=>{
         return;
     }
     if(!parts[cSideKey]) {
-        alert("❌ Please click 'Update Sides' button before adding components!");
+        alert("❌ Part model is not ready yet - adjust any setting or re-enable the side!");
         return;
     }
     const d=1;
@@ -3495,6 +3766,12 @@ document.getElementById("fingerCount").addEventListener("input", (e) => {
 
 document.getElementById("fingerClearance").addEventListener("input", (e) => {
     onFingerChange("finger_clearance", parseFloat(e.target.value || "0"));
+});
+
+["Top", "Bottom", "Front", "Back", "Left", "Right"].forEach(s => {
+    document.getElementById(`fingerCheck${s}`).addEventListener("change", (e) => {
+        onFingerChange(`finger_joint_${s.toLowerCase()}`, e.target.checked);
+    });
 });
 
 document.getElementById("undoBtn").addEventListener("click", undo);
@@ -3636,6 +3913,10 @@ document.getElementById("loadJSONBtn").addEventListener("click", () => {
                 document.getElementById("fingerSize").value = generic.finger_size || 0;
                 document.getElementById("fingerCount").value = generic.finger_count || 0;
                 document.getElementById("fingerClearance").value = generic.finger_clearance || 0;
+                ["Top", "Bottom", "Front", "Back", "Left", "Right"].forEach(s => {
+                    const v = generic[`finger_joint_${s.toLowerCase()}`];
+                    document.getElementById(`fingerCheck${s}`).checked = v === undefined ? true : v;
+                });
                 if (parts.Generic.finger_joint === undefined) {
                     parts.Generic.finger_joint = false;
                     parts.Generic.finger_size = 0;
