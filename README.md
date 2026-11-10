@@ -58,7 +58,7 @@ A **free, open-source, web-based 3D box designer** for laser engravers, CNC rout
 
 The JSON file serves as input for **three free MIDILLI production tools**, each optimized for different manufacturing methods:
 
-### 1. 🔥 [MIDILLI SVG Generator for Laser Engraving Machines](https://midilli.tech/product/midilli-svg-generator-for-laser-engraving-machines/)
+### 1. 🔥 [MIDILLI SVG Generator for Laser Engraving Machines](https://midilli.tech/shop/midilli-svg-generator-for-laser-engraving-machines/)
 Create **SVG vector files** for laser cutters. Perfect for:
 - Wood, acrylic, cardboard cutting
 - Precise edge cuts and engravings
@@ -68,7 +68,7 @@ Create **SVG vector files** for laser cutters. Perfect for:
 
 ---
 
-### 2. ⚙️ [MIDILLI G-Code Generator for CNC Routers](https://midilli.tech/product/midilli-g-code-generator-for-cnc-routers/)
+### 2. ⚙️ [MIDILLI G-Code Generator for CNC Routers](https://midilli.tech/shop/midilli-g-code-generator-for-cnc-routers/)
 Generate **G-Code toolpaths** for CNC machines. Features:
 - Multi-depth cutting (recesses, pockets, through-cuts)
 - Tool path optimization
@@ -78,7 +78,7 @@ Generate **G-Code toolpaths** for CNC machines. Features:
 
 ---
 
-### 3. 🖨️ [MIDILLI STL Generator for 3D Printers](https://midilli.tech/product/midilli-stl-generator-for-3d-printers/)
+### 3. 🖨️ [MIDILLI STL Generator for 3D Printers](https://midilli.tech/shop/midilli-stl-generator-for-3d-printers/)
 Export **STL 3D models** for additive manufacturing. Supports:
 - Negative space (holes and cutouts)
 - Text embossing/debossing
